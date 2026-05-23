@@ -133,7 +133,7 @@ def lang(line):
                         print(f"FileNotFoundError: File {parts[1]} not found")
                         return
                     except (PermissionError):
-                        print(f"PermissionError: Script has no permission for {parts[2]}")
+                        print(f"PermissionError: Script has no permission for {parts[1]}")
                         return
                 elif os.path.isdir(parts[1]):
                     shutil.rmtree(parts[1])
