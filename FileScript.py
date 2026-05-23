@@ -120,7 +120,7 @@ def lang(line):
                         return
 
             except (FileExistsError):
-                print(f"FileExistError: File {parts[1]} already exist")
+                print(f"FileExistError: File {parts[2]} already exist")
                 return
 
     elif parts[0] == "remove":
