@@ -15,13 +15,13 @@ FileScript is being developed as an idea for the most convenient language for wo
 ### Run a script file
 
 ```bash
-filescript.exe script.filesc
+FileScript.exe script.filesc
 ```
 
 or
 
 ```bash
-./filescript.exe script.filesc
+./FileScript.exe script.filesc
 ```
 
 ---
@@ -31,7 +31,7 @@ or
 If you run the program without arguments:
 
 ```bash
-filescript.exe
+FileScript.exe
 ```
 
 You can type commands directly:
