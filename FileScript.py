@@ -49,7 +49,7 @@ def lang(line):
                 print("SyntaxError: input must have 1 argument")
 
     elif parts[0] == "if":
-        cond = variables[parts[1]] == " ".join(parts[2:])
+        cond = variables[parts[1]] == parts[2]
 
         if len(parts) >= 3:
             if len(skip) > 0 and skip[-1] == False:
