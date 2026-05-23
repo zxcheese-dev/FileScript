@@ -6,7 +6,7 @@ FileScript is a simple custom scripting language interpreter written in Python a
 
 It supports variables, file operations, conditionals, and basic input/output.
 
-FileScript is being developed as an idea for the most convenient language for working with files, focusing on simplicity, readability, and fast scripting for file-based tasks.
+FileScript is being developed as an idea for the more convenient language for working with files, focusing on simplicity, readability, and fast scripting for file-based tasks.
 
 ---
 
