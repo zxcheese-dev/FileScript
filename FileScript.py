@@ -37,7 +37,7 @@ def lang(line):
             else:
                 print("SyntaxError: var name value")
                 return
-        
+
     elif parts[0] == "input":
         if not skip or skip[-1]:
             if len(parts) == 2:
@@ -49,7 +49,8 @@ def lang(line):
                 print("SyntaxError: input must have 1 argument")
 
     elif parts[0] == "if":
-        cond = variables[parts[1]] == parts[2]
+        if not skip or not False in skip:
+        	cond = variables[parts[1]] == parts[2]
 
         if len(parts) >= 3:
             if len(skip) > 0 and skip[-1] == False:
