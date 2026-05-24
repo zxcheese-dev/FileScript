@@ -37,7 +37,7 @@ def lang(line):
             else:
                 print("SyntaxError: var name value")
                 return
-
+        
     elif parts[0] == "input":
         if not skip or skip[-1]:
             if len(parts) == 2:
@@ -50,17 +50,20 @@ def lang(line):
 
     elif parts[0] == "if":
         if not skip or not False in skip:
-        	cond = variables[parts[1]] == parts[2]
+            if parts[2] == "==":
+                cond = variables[parts[1]] == parts[3]
+            elif parts[2] == "!=":
+                cond = variables[parts[1]] != parts[3]
 
-        if len(parts) >= 3:
-            if len(skip) > 0 and skip[-1] == False:
-                skip.append(False)
+            if len(parts) >= 4:
+                if len(skip) > 0 and skip[-1] == False:
+                    skip.append(False)
+                else:
+                    skip.append(cond)
+
             else:
-                skip.append(cond)
-
-        else:
-            print("if: if requires 2 value")
-            return
+                print("if: if requires 3 value")
+                return
 
     elif parts[0] == "endif":
         skip.pop()
@@ -121,7 +124,7 @@ def lang(line):
                         return
 
             except (FileExistsError):
-                print(f"FileExistError: File {parts[2]} already exist")
+                print(f"FileExistError: File {parts[1]} already exist")
                 return
 
     elif parts[0] == "remove":
@@ -134,7 +137,7 @@ def lang(line):
                         print(f"FileNotFoundError: File {parts[1]} not found")
                         return
                     except (PermissionError):
-                        print(f"PermissionError: Script has no permission for {parts[1]}")
+                        print(f"PermissionError: Script has no permission for {parts[2]}")
                         return
                 elif os.path.isdir(parts[1]):
                     shutil.rmtree(parts[1])
