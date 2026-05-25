@@ -21,7 +21,8 @@ def lang(line):
                 if value in variables:
                     print(variables[value])
                 else:
-                    print(value)
+                    print(f"NameError: Name '{parts[1]}' not defined")
+                    return
 
             else:
                 print("SyntaxError: println requires 1 value")
