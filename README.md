@@ -2,43 +2,43 @@
 
 ## Overview
 
-FileScript is a simple custom scripting language interpreter written in Python and packaged as a standalone executable.
+FileScript is a custom scripting language interpreter written in Python and packaged as a standalone executable.
 
-It supports variables, file operations, conditionals, and basic input/output.
+It is designed as a simple but expanding language focused on **file operations**, **variable handling**, and **basic scripting logic**.
 
-FileScript is being developed as an idea for the more convenient language for working with files, focusing on simplicity, readability, and fast scripting for file-based tasks.
+The main idea of FileScript is to evolve into a **convenient and minimal language for working with files**, making file automation as simple and readable as possible.
 
 ---
 
 ## How to run
 
-### Run a script file
+### Run executable with a script
 
 ```bash
-FileScript.exe script.filesc
+filescript.exe script.filesc
 ```
 
 or
 
 ```bash
-./FileScript.exe script.filesc
+./filescript.exe script.filesc
 ```
 
 ---
 
 ### Interactive mode (REPL)
 
-If you run the program without arguments:
+If no file is provided:
 
 ```bash
-FileScript.exe
+filescript.exe
 ```
 
 You can type commands directly:
 
 ```
-> var x 10
-> println x
+> var name "Hello"
+> println name
 ```
 
 ---
@@ -48,26 +48,44 @@ You can type commands directly:
 Only `.filesc` files are supported.
 
 Example:
+
 ```
 script.filesc
 ```
 
 ---
 
-## Features
+## Language features
 
 ### Variables
 
+```text
+var name "Hello"
+var name2 name
+println name2
 ```
-var name value
-println name
+
+- Supports string values
+- Supports variable-to-variable assignment
+- Unknown variables cause `NameError`
+
+---
+
+### Output
+
+```text
+println value
 ```
+
+Prints either:
+- variable value (if exists)
+- raw string otherwise
 
 ---
 
 ### Input
 
-```
+```text
 input name
 ```
 
@@ -77,70 +95,119 @@ Stores user input into a variable.
 
 ### Conditionals
 
-```
-if a b
+```text
+if a == b
+if a != b
 ...
 endif
 ```
 
-Compares variable `a` with string `b`.  
-If the condition is false, the block is skipped.
+- Supports `==` and `!=`
+- Compares variables or string literals
+- Strict mode: undefined names raise errors
 
 ---
 
 ### File operations
 
-**Read file**
-```
-open file.txt varname
+#### Open file
+
+```text
+open path varname
 ```
 
-**Write file (overwrite)**
-```
-write file.txt text
+Reads file content into a variable.
+
+Supports:
+- string path
+- variable path
+
+---
+
+#### Write file
+
+```text
+write path content
 ```
 
-**Append to file**
-```
-add file.txt text
+Overwrites file content.
+
+---
+
+#### Append to file
+
+```text
+add path content
 ```
 
-**Create file**
-```
-create file file.txt content
-```
+Appends data to file.
 
-**Create directory**
-```
+---
+
+#### Create
+
+```text
+create file filename content
 create dir dirname
 ```
 
-**Remove file or directory**
-```
+---
+
+#### Remove
+
+```text
 remove path
 ```
+
+Deletes file or directory.
+
+Supports:
+- string paths
+- variables containing paths
+
+---
+
+### Directory listing
+
+```text
+ls path
+ls path file
+ls path dir
+```
+
+Modes:
+- default → shows `[DIR]` and `[FILE]`
+- `file` → only files
+- `dir` → only directories
+
+Supports:
+- string paths
+- variable paths
 
 ---
 
 ## Errors
 
 - `SyntaxError` — invalid command usage  
-- `FileNotFoundError` — file not found  
+- `NameError` — unknown variable or command  
+- `FileNotFoundError` — missing file  
 - `FileExistsError` — file already exists  
 - `PermissionError` — access denied  
-- `NameError` — unknown command  
+- `IndexError` — invalid argument usage  
+- `EndswithError` — invalid file extension  
 
 ---
 
 ## Build
 
-If built using PyInstaller:
+If using PyInstaller:
 
 ```bash
 pyinstaller --onefile your_script.py
 ```
 
 Output:
+
 ```
 dist/filescript.exe
 ```
@@ -149,9 +216,9 @@ dist/filescript.exe
 
 ## Notes
 
-- No external dependencies required at runtime
-- Variables are stored in memory only
-- All values are treated as strings
-- No functions or loops yet
-- Designed as an educational scripting language focused on file operations and simplicity
+- Everything is string-based (no types yet)
+- Variables can reference other variables
+- Strict undefined-variable behavior
+- Designed for file automation and scripting
+- Actively evolving language
 ```
