@@ -10,6 +10,7 @@ def lang(line):
     if not line:
         return
 
+    dump_split = line.split()
     parts = shlex.split(line)
 
     if parts[0] == "println":
@@ -29,13 +30,23 @@ def lang(line):
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
-                name = parts[1]
-                value = parts[2]
+                if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                    name = parts[1]
+                    value = parts[2]
 
-                variables[name] = value
+                    variables[name] = value
+                else:
+                    if parts[2] in variables:
+                        name = parts[1]
+                        value = variables[parts[2]]
+
+                        variables[name] = value
+                    else:
+                        print(f"NameError: Name '{parts[2]}' not defined")
+                        return
 
             else:
-                print("SyntaxError: var name value")
+                print("SyntaxError: var requires 2 arguments")
                 return
         
     elif parts[0] == "input":
@@ -46,14 +57,29 @@ def lang(line):
 
                 variables[input_name] = val
             else:
-                print("SyntaxError: input must have 1 argument")
+                print("SyntaxError: input requires 1 argument")
 
     elif parts[0] == "if":
         if not skip or not False in skip:
             if parts[2] == "==":
-                cond = variables[parts[1]] == parts[3]
+                if not parts[3] in variables:
+                    if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
+                        cond = variables[parts[1]] == parts[3]
+                    else:
+                        print(f"IndexError: Name '{parts[3]}' not defined")
+                        return
+                else:
+                    cond = variables[parts[1]] == variables[parts[3]]
+
             elif parts[2] == "!=":
-                cond = variables[parts[1]] != parts[3]
+                if not parts[3] in variables:
+                    if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
+                        cond = variables[parts[1]] != parts[3]
+                    else:
+                        print(f"IndexError: Name '{parts[3]}' not defined")
+                        return
+                else:
+                    cond = variables[parts[1]] != variables[parts[3]]
 
             if len(parts) >= 4:
                 if len(skip) > 0 and skip[-1] == False:
@@ -62,7 +88,7 @@ def lang(line):
                     skip.append(cond)
 
             else:
-                print("if: if requires 3 value")
+                print("SyntaxError: if requires 3 arguments")
                 return
 
     elif parts[0] == "endif":
@@ -72,9 +98,18 @@ def lang(line):
         if not skip or skip[-1]:
             if len(parts) >= 3:
                 try:
-                    with open(parts[1], 'r', encoding='utf-8') as f:
-                        data = f.read()
-                    variables[parts[2]] = data
+                    if dump_split[1:dump_split.index(parts[2])][0][0] == '"' and dump_split[1:dump_split.index(parts[2])][-1][-1] == '"':
+                        with open(parts[1], 'r', encoding='utf-8') as f:
+                            data = f.read()
+                        variables[parts[2]] = data
+                    else:
+                        if parts[1] in variables:
+                            with open(variables[parts[1]], 'r', encoding='utf-8') as f:
+                                data = f.read()
+                            variables[parts[2]] = data
+                        else:
+                            print(f"NameError: Name '{parts[1]}' not defined")
+                            return
 
                 except (FileNotFoundError):
                     print(f"FileNotFoundError: File {parts[1]} not found")
@@ -85,9 +120,16 @@ def lang(line):
 
     elif parts[0] == "write":
         if not skip or skip[-1]:
-            if len(parts) >= 3:
+            if len(parts) == 3:
                 with open(parts[1], 'w', encoding='utf-8') as f:
-                    f.write(parts[2])
+                    if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                        f.write(parts[2])
+                    else:
+                        if parts[2] in variables:
+                            f.write(variables[parts[2]])
+                        else:
+                            print(f"NameError: Name '{parts[2]}' not defined")
+                            return
             else:
                 print("SyntaxError: write requires 2 arguments")
                 return
@@ -97,7 +139,14 @@ def lang(line):
             if len(parts) >= 3:
                 try:
                     with open(parts[1], 'a', encoding='utf-8') as f:
-                        f.write(parts[2])
+                        if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                            f.write(parts[2])
+                        else:
+                            if parts[2] in variables:
+                                f.write(variables[parts[2]])
+                            else:
+                                print(f"NameError: Name '{parts[2]}' not defined")
+                                return
 
                 except (FileNotFoundError):
                     print(f"FileNotFoundError: File {parts[1]} not found")
@@ -112,13 +161,27 @@ def lang(line):
                 if parts[1] == "file":
                     if len(parts) == 4:
                         with open(parts[2], 'x', encoding='utf-8') as f:
-                            f.write(parts[3])
+                            if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
+                                f.write(parts[3])
+                            else:
+                                if parts[3] in variables:
+                                    f.write(variables[parts[3]])
+                                else:
+                                    print(f"NameError: Name '{parts[3]}' not defined")
+                                    return
                     else:
                         print("SyntaxError: create requires 3 arguments for files")
                         return
                 elif parts[1] == "dir":
                     if len(parts) == 3:
-                        os.mkdir(parts[2])
+                        if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                            os.mkdir(parts[2])
+                        else:
+                            if parts[2] in variables:
+                                os.mkdir(variables[parts[2]])
+                            else:
+                                print(f"NameError: Name '{parts[2]}' not defined")
+                                return
                     else:
                         print("SyntaxError: create requires 2 arguments for dirs")
                         return
@@ -129,20 +192,82 @@ def lang(line):
 
     elif parts[0] == "remove":
         if not skip or skip[-1]:
-            if len(parts) >= 2:
-                if os.path.isfile(parts[1]):
-                    try:
-                        os.remove(parts[1])
-                    except (FileNotFoundError):
-                        print(f"FileNotFoundError: File {parts[1]} not found")
+            if len(parts) == 2:
+                if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
+                    if os.path.isfile(parts[1]):
+                        try:
+                            os.remove(parts[1])
+                        except (FileNotFoundError):
+                            print(f"FileNotFoundError: File {parts[1]} not found")
+                            return
+                        except (PermissionError):
+                            print(f"PermissionError: Script has no permission for {parts[1]}")
+                            return
+                    elif os.path.isdir(parts[1]):
+                        shutil.rmtree(parts[1])
+                else:
+                    if parts[1] in variables:
+                        if os.path.isfile(variables[parts[1]]):
+                            try:
+                                os.remove(variables[parts[1]])
+                            except (FileNotFoundError):
+                                print(f"FileNotFoundError: File {parts[1]} not found")
+                                return
+                            except (PermissionError):
+                                print(f"PermissionError: Script has no permission for {parts[1]}")
+                                return
+                        elif os.path.isdir(variables[parts[1]]):
+                            shutil.rmtree(variables[parts[1]])
+                    else:
+                        print(f"NameError: Name '{parts[1]}' not defined")
                         return
-                    except (PermissionError):
-                        print(f"PermissionError: Script has no permission for {parts[2]}")
-                        return
-                elif os.path.isdir(parts[1]):
-                    shutil.rmtree(parts[1])
             else:
-                print("SyntaxError: remove requires 2 arguments")
+                print("SyntaxError: remove requires 1 arguments")
+                return
+
+    elif parts[0] == "ls":
+        if not skip or skip[-1]:
+            if len(parts) >= 2:
+                if len(parts) == 3:
+                    if parts[2] == "file":
+                        for item in os.listdir(parts[1]):
+                            full_path = os.path.join(parts[1], item)
+                            
+                            if os.path.isfile(full_path):
+                                print(item)
+                    elif parts[2] == "dir":
+                        for item in os.listdir(parts[1]):
+                            full_path = os.path.join(parts[1], item)
+
+                            if os.path.isdir(full_path):
+                                print(item)
+                    else:
+                        print(f"IndexError: Argument '{parts[2]}' is not defined")
+                        return
+                    
+                else:
+                    if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
+                        for item in os.listdir(parts[1]):
+                            full_path = os.path.join(parts[1], item)
+
+                            if os.path.isdir(full_path):
+                                print(f"[DIR] {item}")
+                            elif os.path.isfile(full_path):
+                                print(f"[FILE] {item}")
+                    else:
+                        if parts[1] in variables:
+                            for item in os.listdir(variables[parts[1]]):
+                                full_path = os.path.join(variables[parts[1]], item)
+
+                                if os.path.isdir(full_path):
+                                    print(f"[DIR] {item}")
+                                elif os.path.isfile(full_path):
+                                    print(f"[FILE] {item}")
+                        else:
+                            print(f"NameError: Name '{parts[1]}' not defined")
+                            return
+            else:
+                print("SyntaxError: ls requires 1 or 2 arguments")
                 return
 
     else:
@@ -151,7 +276,7 @@ def lang(line):
 
 def run_file(filename):
     if not filename.endswith(".filesc"):
-        print("Error: only .filesc files are supported")
+        print("EndswithError: Only .filesc files are supported")
         return
 
     try:
@@ -161,7 +286,8 @@ def run_file(filename):
                 if line:
                     lang(line)
     except FileNotFoundError:
-        print(f"Error: file '{filename}' not found")
+        print(f"FileNotFoundError: File '{filename}' not found")
+        return
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
