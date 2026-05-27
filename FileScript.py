@@ -6,6 +6,19 @@ import shutil
 variables = {}
 skip = []
 
+def tokenise(value):
+    value_str = value.split()
+    if value_str[0][0] == '"' and value_str[-1][-1] == '"':
+        return str(value)
+    elif value.isdigit():
+        return int(value)
+    elif value == "true":
+        return True
+    elif value == "false":
+        return False
+    else:
+        return variables[value]
+
 def lang(line):
     if not line:
         return
@@ -21,8 +34,7 @@ def lang(line):
                 if value in variables:
                     print(variables[value])
                 else:
-                    print(f"NameError: Name '{parts[1]}' not defined")
-                    return
+                    print(value)
 
             else:
                 print("SyntaxError: println requires 1 value")
@@ -31,25 +43,14 @@ def lang(line):
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
-                if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
-                    name = parts[1]
-                    value = parts[2]
+                name = parts[1]
+                value = tokenise(parts[2])
 
-                    variables[name] = value
-                else:
-                    if parts[2] in variables:
-                        name = parts[1]
-                        value = variables[parts[2]]
-
-                        variables[name] = value
-                    else:
-                        print(f"NameError: Name '{parts[2]}' not defined")
-                        return
-
+                variables[name] = value
             else:
                 print("SyntaxError: var requires 2 arguments")
                 return
-        
+
     elif parts[0] == "input":
         if not skip or skip[-1]:
             if len(parts) == 2:
