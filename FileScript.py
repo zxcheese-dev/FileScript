@@ -2,22 +2,53 @@ import sys
 import os
 import shlex
 import shutil
+import subprocess
 
 variables = {}
 skip = []
 
 def tokenise(value):
-    value_str = value.split()
-    if value_str[0][0] == '"' and value_str[-1][-1] == '"':
-        return str(value)
-    elif value.isdigit():
-        return int(value)
-    elif value == "true":
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+
+    if value == "true":
         return True
-    elif value == "false":
+    if value == "false":
         return False
-    else:
+
+    try:
+        if '.' in value:
+            return float(value)
+        return int(value)
+    except ValueError:
+        pass
+
+    if value in variables:
         return variables[value]
+
+    raise NameError(f"Name '{value}' not defined")
+    return None
+
+def compare(a, b, op):
+    def coerce(x, ref):
+        if isinstance(ref, (int, float)) and isinstance(x, str):
+            try:
+                return float(x) if '.' in x else int(x)
+            except ValueError:
+                pass
+        return x
+
+    a = coerce(a, b)
+    b = coerce(b, a)
+
+    if op == "==": return a == b
+    if op == "!=": return a != b
+    if op == "<":  return a < b
+    if op == ">":  return a > b
+    if op == "<=": return a <= b
+    if op == ">=": return a >= b
+    raise SyntaxError(f"Unknown operator '{op}'")
+    return False
 
 def lang(line):
     if not line:
@@ -30,71 +61,49 @@ def lang(line):
         if not skip or skip[-1]:
             if len(parts) == 2:
                 value = parts[1]
-
                 if value in variables:
                     print(variables[value])
+                elif value.startswith('"') and value.endswith('"'):
+                    print(value[1:-1])
                 else:
                     print(value)
-
             else:
-                print("SyntaxError: println requires 1 value")
-                return
+                raise SyntaxError("println requires 1 value")
 
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
                 name = parts[1]
-                value = tokenise(parts[2])
-
-                variables[name] = value
+                raw = line.split(None, 2)[2]
+                variables[name] = tokenise(raw.strip())
             else:
-                print("SyntaxError: var requires 2 arguments")
-                return
+                raise SyntaxError("var requires 2 arguments")
 
     elif parts[0] == "input":
         if not skip or skip[-1]:
             if len(parts) == 2:
-                input_name = parts[1]
-                val = input()
-
-                variables[input_name] = val
+                variables[parts[1]] = input()
             else:
-                print("SyntaxError: input requires 1 argument")
+                raise SyntaxError("input requires 1 argument")
 
     elif parts[0] == "if":
         if not skip or not False in skip:
-            if parts[2] == "==":
-                if not parts[3] in variables:
-                    if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
-                        cond = variables[parts[1]] == parts[3]
-                    else:
-                        print(f"IndexError: Name '{parts[3]}' not defined")
-                        return
-                else:
-                    cond = variables[parts[1]] == variables[parts[3]]
-
-            elif parts[2] == "!=":
-                if not parts[3] in variables:
-                    if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
-                        cond = variables[parts[1]] != parts[3]
-                    else:
-                        print(f"IndexError: Name '{parts[3]}' not defined")
-                        return
-                else:
-                    cond = variables[parts[1]] != variables[parts[3]]
-
             if len(parts) >= 4:
+                left  = tokenise(parts[1])
+                op    = parts[2]
+                right = tokenise(parts[3])
+                cond  = compare(left, right, op)
+
                 if len(skip) > 0 and skip[-1] == False:
                     skip.append(False)
                 else:
                     skip.append(cond)
-
             else:
-                print("SyntaxError: if requires 3 arguments")
-                return
+                raise SyntaxError("if requires 3 arguments")
 
     elif parts[0] == "endif":
-        skip.pop()
+        if skip:
+            skip.pop()
 
     elif parts[0] == "open":
         if not skip or skip[-1]:
@@ -110,15 +119,12 @@ def lang(line):
                                 data = f.read()
                             variables[parts[2]] = data
                         else:
-                            print(f"NameError: Name '{parts[1]}' not defined")
-                            return
+                            raise NameError(f"Name '{parts[1]}' not defined")
 
                 except (FileNotFoundError):
-                    print(f"FileNotFoundError: File {parts[1]} not found")
-                    return
+                    raise FileNotFoundError(f"File {parts[1]} not found")
             else:
-                print("SyntaxError: open requires 2 arguments")
-                return
+                raise SyntaxError("open requires 2 arguments")
 
     elif parts[0] == "write":
         if not skip or skip[-1]:
@@ -130,11 +136,9 @@ def lang(line):
                         if parts[2] in variables:
                             f.write(variables[parts[2]])
                         else:
-                            print(f"NameError: Name '{parts[2]}' not defined")
-                            return
+                            raise NameError(f"Name '{parts[2]}' not defined")
             else:
-                print("SyntaxError: write requires 2 arguments")
-                return
+                raise SyntaxError("write requires 2 arguments")
 
     elif parts[0] == "add":
         if not skip or skip[-1]:
@@ -147,15 +151,12 @@ def lang(line):
                             if parts[2] in variables:
                                 f.write(variables[parts[2]])
                             else:
-                                print(f"NameError: Name '{parts[2]}' not defined")
-                                return
+                                raise NameError(f"Name '{parts[2]}' not defined")
 
                 except (FileNotFoundError):
-                    print(f"FileNotFoundError: File {parts[1]} not found")
-                    return
+                    raise FileNotFoundError(f"File {parts[1]} not found")
             else:
-                print("SyntaxError: add requires 2 arguments")
-                return
+                raise SyntaxError("add requires 2 arguments")
 
     elif parts[0] == "create":
         if not skip or skip[-1]:
@@ -169,11 +170,9 @@ def lang(line):
                                 if parts[3] in variables:
                                     f.write(variables[parts[3]])
                                 else:
-                                    print(f"NameError: Name '{parts[3]}' not defined")
-                                    return
+                                    raise NameError(f"Name '{parts[3]}' not defined")
                     else:
-                        print("SyntaxError: create requires 3 arguments for files")
-                        return
+                        raise SyntaxError("create requires 3 arguments for files")
                 elif parts[1] == "dir":
                     if len(parts) == 3:
                         if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
@@ -182,15 +181,12 @@ def lang(line):
                             if parts[2] in variables:
                                 os.mkdir(variables[parts[2]])
                             else:
-                                print(f"NameError: Name '{parts[2]}' not defined")
-                                return
+                                raise NameError(f"Name '{parts[2]}' not defined")
                     else:
-                        print("SyntaxError: create requires 2 arguments for dirs")
-                        return
+                        raise SyntaxError("create requires 2 arguments for dirs")
 
             except (FileExistsError):
-                print(f"FileExistError: File {parts[1]} already exist")
-                return
+                raise FileExistsError(f"File {parts[1]} already exist")
 
     elif parts[0] == "remove":
         if not skip or skip[-1]:
@@ -200,11 +196,9 @@ def lang(line):
                         try:
                             os.remove(parts[1])
                         except (FileNotFoundError):
-                            print(f"FileNotFoundError: File {parts[1]} not found")
-                            return
+                            raise FileNotFoundError(f"File {parts[1]} not found")
                         except (PermissionError):
-                            print(f"PermissionError: Script has no permission for {parts[1]}")
-                            return
+                            raise PermissionError(f"Script has no permission for {parts[1]}")
                     elif os.path.isdir(parts[1]):
                         shutil.rmtree(parts[1])
                 else:
@@ -213,19 +207,15 @@ def lang(line):
                             try:
                                 os.remove(variables[parts[1]])
                             except (FileNotFoundError):
-                                print(f"FileNotFoundError: File {parts[1]} not found")
-                                return
+                                raise FileNotFoundError(f"File {parts[1]} not found")
                             except (PermissionError):
-                                print(f"PermissionError: Script has no permission for {parts[1]}")
-                                return
+                                raise PermissionError(f"Script has no permission for {parts[1]}")
                         elif os.path.isdir(variables[parts[1]]):
                             shutil.rmtree(variables[parts[1]])
                     else:
-                        print(f"NameError: Name '{parts[1]}' not defined")
-                        return
+                        raise NameError(f"Name '{parts[1]}' not defined")
             else:
-                print("SyntaxError: remove requires 1 arguments")
-                return
+                raise SyntaxError("remove requires 1 arguments")
 
     elif parts[0] == "ls":
         if not skip or skip[-1]:
@@ -244,8 +234,7 @@ def lang(line):
                             if os.path.isdir(full_path):
                                 print(item)
                     else:
-                        print(f"IndexError: Argument '{parts[2]}' is not defined")
-                        return
+                        raise IndexError(f"Argument '{parts[2]}' is not defined")
                     
                 else:
                     if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
@@ -266,15 +255,60 @@ def lang(line):
                                 elif os.path.isfile(full_path):
                                     print(f"[FILE] {item}")
                         else:
-                            print(f"NameError: Name '{parts[1]}' not defined")
-                            return
+                            raise NameError(f"Name '{parts[1]}' not defined")
             else:
-                print("SyntaxError: ls requires 1 or 2 arguments")
-                return
+                raise SyntaxError("ls requires 1 or 2 arguments")
+    
+    elif parts[0] == "reboot":
+        try:
+            if len(parts) == 2:
+                os.system(f"shutdown /r /t {int(parts[1])}")
+            else:
+                raise SyntaxError("reboot requires 1 argument")
+        except (ValueError):
+            raise ValueError(f"Argument '{parts[1]}' cannot be integer")
+    
+    elif parts[0] == "root":
+        if len(parts) == 3:
+            if parts[1] == "file":
+                if os.path.isfile(parts[2]):
+                    commands = [
+                        f'takeown /f "{parts[2]}"',
+                        f'icacls "{parts[2]}" /grant %username%:F',
+                        f'icacls "{parts[2]}" /grant Administrators:F'
+                    ]
+
+                    for cmd in commands:
+                        root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+                        if root.returncode != 0:
+                            raise RuntimeError(f"root returned {root.returncode}")
+                else:
+                    raise FileNotFoundError(f"File '{parts[2]}' not found")
+
+            elif parts[1] == "dir":
+                if os.path.isdir(parts[2]):
+                    commands = [
+                        f'takeown /f "{parts[2]}" /r /d y',
+                        f'icacls "{parts[2]}" /grant %username%:F /t',
+                        f'icacls "{parts[2]}" /grant Administrators:F /t'
+                    ]
+
+                    for cmd in commands:
+                        root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+                        if root.returncode != 0:
+                            raise RuntimeError(f"root returned {root.returncode}")
+                else:
+                    raise FileNotFoundError(f"Dir '{parts[2]}' not found")
+
+            else:
+                raise IndexError(f"Argument '{parts[1]}' is not defined")
+        else:
+            raise SyntaxError("root requires 2 arguments")
 
     else:
-        print(f"NameError: Unknown command {parts[0]}")
-        return
+        raise NameError(f"Unknown command {parts[0]}")
 
 def run_file(filename):
     if not filename.endswith(".filesc"):
@@ -288,8 +322,7 @@ def run_file(filename):
                 if line:
                     lang(line)
     except FileNotFoundError:
-        print(f"FileNotFoundError: File '{filename}' not found")
-        return
+        raise FileNotFoundError(f"File '{filename}' not found")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
