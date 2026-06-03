@@ -1,7 +1,7 @@
 ***FileScript interpreter***
 
-*Simple FileScript programming language for more comfortable work with files and system*
+*Simple FileScript programming language for more comfortable work with files and the system*
 
-*After last update FileScript has real exception for errors in script*
+*After the latest update, FileScript uses real exceptions for script errors*
 
 *Now FileScript has functions root and reboot, making FileScript more system-oriented*
