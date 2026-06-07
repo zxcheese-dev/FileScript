@@ -7,27 +7,24 @@ import subprocess
 variables = {}
 skip = []
 
-def tokenise(value):
-    if value.startswith('"') and value.endswith('"'):
-        return value[1:-1]
-
-    if value == "true":
-        return True
-    if value == "false":
-        return False
-
-    try:
-        if '.' in value:
-            return float(value)
-        return int(value)
-    except ValueError:
-        pass
-
+def tokenise(value, dump_value=None):
     if value in variables:
         return variables[value]
 
-    raise NameError(f"Name '{value}' not defined")
-    return None
+    else:
+        if dump_value[0][0] == '"' and dump_value[-1][-1] == '"':
+            return value
+
+        elif value == "true":
+            return True
+        elif value == "false":
+            return False
+
+        elif value.isdigit():
+            return int(value)
+
+        else:
+            raise NameError(f"Name {value} not defined")
 
 def compare(a, b, op):
     def coerce(x, ref):
@@ -63,19 +60,15 @@ def lang(line):
                 value = parts[1]
                 if value in variables:
                     print(variables[value])
-                elif value.startswith('"') and value.endswith('"'):
-                    print(value[1:-1])
                 else:
-                    print(value)
+                    raise SyntaxError("println requires a variable")
             else:
                 raise SyntaxError("println requires 1 value")
 
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
-                name = parts[1]
-                raw = line.split(None, 2)[2]
-                variables[name] = tokenise(raw.strip())
+                variables[parts[1]] = tokenise(parts[2], dump_split[2:])
             else:
                 raise SyntaxError("var requires 2 arguments")
 
@@ -86,13 +79,43 @@ def lang(line):
             else:
                 raise SyntaxError("input requires 1 argument")
 
+    elif parts[0] == "count":
+        if not skip or skip[-1]:
+            if len(parts) == 4:
+                try:
+                    if parts[1] in variables and parts[3] in variables:
+                        if parts[2] == "+": print(variables[parts[1]] + variables[parts[3]])
+                        elif parts[2] == "-": print(variables[parts[1]] - variables[parts[3]])
+                        elif parts[2] == "*": print(variables[parts[1]] * variables[parts[3]])
+                        elif parts[2] == "/": print(variables[parts[1]] / variables[parts[3]])
+                    else:
+                        if parts[1] in variables:
+                            if parts[2] == "+": print(variables[parts[1]] + int(parts[3]))
+                            elif parts[2] == "-": print(variables[parts[1]] - int(parts[3]))
+                            elif parts[2] == "*": print(variables[parts[1]] * int(parts[3]))
+                            elif parts[2] == "/": print(variables[parts[1]] / int(parts[3]))
+                        elif parts[3] in variables:
+                            if parts[2] == "+": print(int(parts[1]) + variables[parts[3]])
+                            elif parts[2] == "-": print(int(parts[1]) - variables[parts[3]])
+                            elif parts[2] == "*": print(int(parts[1]) * variables[parts[3]])
+                            elif parts[2] == "/": print(int(parts[1]) / variables[parts[3]])
+                        else:
+                            if parts[2] == "+": print(int(parts[1]) + int(parts[3]))
+                            elif parts[2] == "-": print(int(parts[1]) - int(parts[3]))
+                            elif parts[2] == "*": print(int(parts[1]) * int(parts[3]))
+                            elif parts[2] == "/": print(int(parts[1]) / int(parts[3]))
+                except Exception:
+                    pass
+            else:
+                raise SyntaxError("count requires 3 arguments")
+
     elif parts[0] == "if":
         if not skip or not False in skip:
             if len(parts) >= 4:
-                left  = tokenise(parts[1])
-                op    = parts[2]
+                left = tokenise(parts[1])
+                op = parts[2]
                 right = tokenise(parts[3])
-                cond  = compare(left, right, op)
+                cond = compare(left, right, op)
 
                 if len(skip) > 0 and skip[-1] == False:
                     skip.append(False)
@@ -215,7 +238,7 @@ def lang(line):
                     else:
                         raise NameError(f"Name '{parts[1]}' not defined")
             else:
-                raise SyntaxError("remove requires 1 arguments")
+                raise SyntaxError("remove requires 1 argument")
 
     elif parts[0] == "ls":
         if not skip or skip[-1]:
@@ -267,7 +290,7 @@ def lang(line):
                 raise SyntaxError("reboot requires 1 argument")
         except (ValueError):
             raise ValueError(f"Argument '{parts[1]}' cannot be integer")
-    
+
     elif parts[0] == "root":
         if len(parts) == 3:
             if parts[1] == "file":
@@ -306,9 +329,18 @@ def lang(line):
                 raise IndexError(f"Argument '{parts[1]}' is not defined")
         else:
             raise SyntaxError("root requires 2 arguments")
+    
+    elif parts[0] == "dirlist":
+        if len(parts) == 3:
+            file_list = []
+
+            for file in os.listdir(parts[1]):
+                file_list.append(file)
+
+            variables[parts[2]] = file_list
 
     else:
-        raise NameError(f"Unknown command {parts[0]}")
+        raise NameError(f"Unknown command '{parts[0]}'")
 
 def run_file(filename):
     if not filename.endswith(".filesc"):
