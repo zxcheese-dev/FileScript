@@ -3,28 +3,34 @@ import os
 import shlex
 import shutil
 import subprocess
+import re
 
 variables = {}
 skip = []
 
-def tokenise(value, dump_value=None):
+def num_check(arg):
+    try:
+        return int(arg) if arg.isdigit() else float(arg)
+    except ValueError:
+        return None
+
+def tokenise(value, is_string=False):
+    if is_string:
+        return value
+
     if value in variables:
         return variables[value]
 
-    else:
-        if dump_value[0][0] == '"' and dump_value[-1][-1] == '"':
-            return value
+    if value.lower() == "true": return True
+    if value.lower() == "false": return False
 
-        elif value == "true":
-            return True
-        elif value == "false":
-            return False
+    try:
+        if '.' in value: return float(value)
+        return int(value)
+    except ValueError:
+        pass
 
-        elif value.isdigit():
-            return int(value)
-
-        else:
-            raise NameError(f"Name {value} not defined")
+    raise NameError(f"Name '{value}' not defined")
 
 def compare(a, b, op):
     def coerce(x, ref):
@@ -61,14 +67,17 @@ def lang(line):
                 if value in variables:
                     print(variables[value])
                 else:
-                    raise SyntaxError("println requires a variable")
+                    raise NameError(f"Name '{parts[1]}' not defined (println requires variable)")
             else:
                 raise SyntaxError("println requires 1 value")
 
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
-                variables[parts[1]] = tokenise(parts[2], dump_split[2:])
+                raw_val = line.split(maxsplit=2)[2]
+                is_str = (raw_val.startswith('"') and raw_val.endswith('"')) or (raw_val.startswith("'") and raw_val.endswith("'"))
+                
+                variables[parts[1]] = tokenise(parts[2], is_string=is_str)
             else:
                 raise SyntaxError("var requires 2 arguments")
 
@@ -82,39 +91,48 @@ def lang(line):
     elif parts[0] == "count":
         if not skip or skip[-1]:
             if len(parts) == 4:
-                try:
-                    if parts[1] in variables and parts[3] in variables:
-                        if parts[2] == "+": print(variables[parts[1]] + variables[parts[3]])
-                        elif parts[2] == "-": print(variables[parts[1]] - variables[parts[3]])
-                        elif parts[2] == "*": print(variables[parts[1]] * variables[parts[3]])
-                        elif parts[2] == "/": print(variables[parts[1]] / variables[parts[3]])
-                    else:
+                if parts[1] in variables or parts[3] in variables:
+                    try:
                         if parts[1] in variables:
-                            if parts[2] == "+": print(variables[parts[1]] + int(parts[3]))
-                            elif parts[2] == "-": print(variables[parts[1]] - int(parts[3]))
-                            elif parts[2] == "*": print(variables[parts[1]] * int(parts[3]))
-                            elif parts[2] == "/": print(variables[parts[1]] / int(parts[3]))
-                        elif parts[3] in variables:
-                            if parts[2] == "+": print(int(parts[1]) + variables[parts[3]])
-                            elif parts[2] == "-": print(int(parts[1]) - variables[parts[3]])
-                            elif parts[2] == "*": print(int(parts[1]) * variables[parts[3]])
-                            elif parts[2] == "/": print(int(parts[1]) / variables[parts[3]])
-                        else:
-                            if parts[2] == "+": print(int(parts[1]) + int(parts[3]))
-                            elif parts[2] == "-": print(int(parts[1]) - int(parts[3]))
-                            elif parts[2] == "*": print(int(parts[1]) * int(parts[3]))
-                            elif parts[2] == "/": print(int(parts[1]) / int(parts[3]))
-                except Exception:
-                    pass
+                            if parts[2] == "+": print(variables[parts[1]] + num_check(parts[3]))
+                            if parts[2] == "-": print(variables[parts[1]] - num_check(parts[3]))
+                            if parts[2] == "*": print(variables[parts[1]] * num_check(parts[3]))
+                            if parts[2] == "/": print(variables[parts[1]] / num_check(parts[3]))
+                        if parts[3] in variables:
+                            if parts[2] == "+": print(num_check(parts[1]) + variables[parts[3]])
+                            if parts[2] == "-": print(num_check(parts[1]) - variables[parts[3]])
+                            if parts[2] == "*": print(num_check(parts[1]) * variables[parts[3]])
+                            if parts[2] == "/": print(num_check(parts[1]) / variables[parts[3]])
+                    except (ValueError):
+                        raise ValueError("count cannot provide arguments that not number")
+                else:
+                    try:
+                        if parts[2] == "+": print(num_check(parts[1]) + num_check(parts[3]))
+                        if parts[2] == "-": print(num_check(parts[1]) - num_check(parts[3]))
+                        if parts[2] == "*": print(num_check(parts[1]) * num_check(parts[3]))
+                        if parts[2] == "/": print(num_check(parts[1]) / num_check(parts[3]))
+                    except (ValueError):
+                        raise ValueError("count cannot provide arguments that not number")
             else:
                 raise SyntaxError("count requires 3 arguments")
 
     elif parts[0] == "if":
         if not skip or not False in skip:
-            if len(parts) >= 4:
-                left = tokenise(parts[1])
-                op = parts[2]
-                right = tokenise(parts[3])
+            match = re.match(r"if\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
+            if match:
+                raw_left = match.group(1).strip()
+                op = match.group(2)
+                raw_right = match.group(3).strip()
+
+                left_clean = shlex.split(raw_left)[0]
+                right_clean = shlex.split(raw_right)[0]
+
+                left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
+                right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
+
+                left = tokenise(left_clean, is_string=left_is_str)
+                right = tokenise(right_clean, is_string=right_is_str)
+
                 cond = compare(left, right, op)
 
                 if len(skip) > 0 and skip[-1] == False:
