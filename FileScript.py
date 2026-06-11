@@ -33,17 +33,6 @@ def tokenise(value, is_string=False):
     raise NameError(f"Name '{value}' not defined")
 
 def compare(a, b, op):
-    def coerce(x, ref):
-        if isinstance(ref, (int, float)) and isinstance(x, str):
-            try:
-                return float(x) if '.' in x else int(x)
-            except ValueError:
-                pass
-        return x
-
-    a = coerce(a, b)
-    b = coerce(b, a)
-
     if op == "==": return a == b
     if op == "!=": return a != b
     if op == "<":  return a < b
@@ -51,7 +40,6 @@ def compare(a, b, op):
     if op == "<=": return a <= b
     if op == ">=": return a >= b
     raise SyntaxError(f"Unknown operator '{op}'")
-    return False
 
 def lang(line):
     if not line:
@@ -93,16 +81,21 @@ def lang(line):
             if len(parts) == 4:
                 if parts[1] in variables or parts[3] in variables:
                     try:
-                        if parts[1] in variables:
+                        if parts[1] in variables and not parts[3] in variables:
                             if parts[2] == "+": print(variables[parts[1]] + num_check(parts[3]))
                             if parts[2] == "-": print(variables[parts[1]] - num_check(parts[3]))
                             if parts[2] == "*": print(variables[parts[1]] * num_check(parts[3]))
                             if parts[2] == "/": print(variables[parts[1]] / num_check(parts[3]))
-                        if parts[3] in variables:
+                        elif parts[3] in variables and not parts[1] in variables:
                             if parts[2] == "+": print(num_check(parts[1]) + variables[parts[3]])
                             if parts[2] == "-": print(num_check(parts[1]) - variables[parts[3]])
                             if parts[2] == "*": print(num_check(parts[1]) * variables[parts[3]])
                             if parts[2] == "/": print(num_check(parts[1]) / variables[parts[3]])
+                        else:
+                            if parts[2] == "+": print(variables[parts[1]] + variables[parts[3]])
+                            if parts[2] == "-": print(variables[parts[1]] - variables[parts[3]])
+                            if parts[2] == "*": print(variables[parts[1]] * variables[parts[3]])
+                            if parts[2] == "/": print(variables[parts[1]] / variables[parts[3]])
                     except (ValueError):
                         raise ValueError("count cannot provide arguments that not number")
                 else:
@@ -347,15 +340,6 @@ def lang(line):
                 raise IndexError(f"Argument '{parts[1]}' is not defined")
         else:
             raise SyntaxError("root requires 2 arguments")
-    
-    elif parts[0] == "dirlist":
-        if len(parts) == 3:
-            file_list = []
-
-            for file in os.listdir(parts[1]):
-                file_list.append(file)
-
-            variables[parts[2]] = file_list
 
     else:
         raise NameError(f"Unknown command '{parts[0]}'")
