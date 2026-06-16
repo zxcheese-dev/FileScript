@@ -4,6 +4,7 @@ import shlex
 import shutil
 import subprocess
 import re
+import time
 
 variables = {}
 skip = []
@@ -108,6 +109,21 @@ def lang(line):
                         raise ValueError("count cannot provide arguments that not number")
             else:
                 raise SyntaxError("count requires 3 arguments")
+
+    elif parts[0] == "wait":
+        if len(parts) == 2:
+            if parts[1] in variables:
+                time.sleep(variables[parts[1]])
+            else:
+                try:
+                    time.sleep(float(parts[1]))
+                except (ValueError):
+                    if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                        raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
+                    else:
+                        raise ValueError(f"Variable '{parts[1]}' is not defined")
+        else:
+            raise SyntaxError("wait requires 1 argument")
 
     elif parts[0] == "if":
         if not skip or not False in skip:
