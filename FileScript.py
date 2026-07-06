@@ -52,11 +52,10 @@ def lang(line):
     if parts[0] == "println":
         if not skip or skip[-1]:
             if len(parts) == 2:
-                value = parts[1]
-                if value in variables:
-                    print(variables[value])
+                if dump_split[1] in variables:
+                    print(variables[dump_split[1]])
                 else:
-                    raise NameError(f"Name '{parts[1]}' not defined (println requires variable)")
+                    raise NameError(f"Name '{dump_split[1]}' not defined")
             else:
                 raise SyntaxError("println requires 1 value")
 
@@ -80,14 +79,14 @@ def lang(line):
     elif parts[0] == "count":
         if not skip or skip[-1]:
             if len(parts) == 4:
-                if parts[1] in variables or parts[3] in variables:
+                if dump_split[1] in variables or dump_split[3] in variables:
                     try:
-                        if parts[1] in variables and not parts[3] in variables:
+                        if dump_split[1] in variables and not dump_split[3] in variables:
                             if parts[2] == "+": print(variables[parts[1]] + num_check(parts[3]))
                             if parts[2] == "-": print(variables[parts[1]] - num_check(parts[3]))
                             if parts[2] == "*": print(variables[parts[1]] * num_check(parts[3]))
                             if parts[2] == "/": print(variables[parts[1]] / num_check(parts[3]))
-                        elif parts[3] in variables and not parts[1] in variables:
+                        elif dump_split[3] in variables and not dump_split[1] in variables:
                             if parts[2] == "+": print(num_check(parts[1]) + variables[parts[3]])
                             if parts[2] == "-": print(num_check(parts[1]) - variables[parts[3]])
                             if parts[2] == "*": print(num_check(parts[1]) * variables[parts[3]])
@@ -112,8 +111,8 @@ def lang(line):
 
     elif parts[0] == "wait":
         if len(parts) == 2:
-            if parts[1] in variables:
-                time.sleep(variables[parts[1]])
+            if dump_split[1] in variables:
+                time.sleep(variables[dump_split[1]])
             else:
                 try:
                     time.sleep(float(parts[1]))
@@ -312,50 +311,103 @@ def lang(line):
     elif parts[0] == "reboot":
         try:
             if len(parts) == 2:
-                os.system(f"shutdown /r /t {int(parts[1])}")
+                if dump_split[1] in variables:
+                    os.system(f"scutdown /r /t {int(variables[parts[1]])}")
+                else:
+                    os.system(f"shutdown /r /t {int(parts[1])}")
             else:
                 raise SyntaxError("reboot requires 1 argument")
         except (ValueError):
-            raise ValueError(f"Argument '{parts[1]}' cannot be integer")
+            if parts[1] in variables:
+                raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
+            else:
+                raise ValueError(f"Argument '{parts[1]}' cannot be integer")
 
     elif parts[0] == "root":
         if len(parts) == 3:
             if parts[1] == "file":
-                if os.path.isfile(parts[2]):
-                    commands = [
-                        f'takeown /f "{parts[2]}"',
-                        f'icacls "{parts[2]}" /grant %username%:F',
-                        f'icacls "{parts[2]}" /grant Administrators:F'
-                    ]
-
-                    for cmd in commands:
-                        root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-                        if root.returncode != 0:
-                            raise RuntimeError(f"root returned {root.returncode}")
+                if dump_split[2] in variables:
+                    if os.path.isfile(variables[parts[2]]):
+                        commands = [
+                            f'takeown /f "{variables[parts[2]]}"',
+                            f'icacls "{variables[parts[2]]}" /grant %username%:F',
+                            f'icacls "{variables[parts[2]]}" /grant Administrators:F'
+                        ]
+    
+                        for cmd in commands:
+                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    
+                            if root.returncode != 0:
+                                raise RuntimeError(f"root returned {root.returncode}")
+                    else:
+                        raise FileNotFoundError(f"File '{variables[parts[2]]}' not found")
                 else:
-                    raise FileNotFoundError(f"File '{parts[2]}' not found")
+                    if os.path.isfile(parts[2]):
+                        commands = [
+                            f'takeown /f "{parts[2]}"',
+                            f'icacls "{parts[2]}" /grant %username%:F',
+                            f'icacls "{parts[2]}" /grant Administrators:F'
+                        ]
+
+                        for cmd in commands:
+                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+                            if root.returncode != 0:
+                                raise RuntimeError(f"root returned {root.returncode}")
+                    else:
+                        raise FileNotFoundError(f"File '{parts[2]}' not found")
 
             elif parts[1] == "dir":
-                if os.path.isdir(parts[2]):
-                    commands = [
-                        f'takeown /f "{parts[2]}" /r /d y',
-                        f'icacls "{parts[2]}" /grant %username%:F /t',
-                        f'icacls "{parts[2]}" /grant Administrators:F /t'
-                    ]
-
-                    for cmd in commands:
-                        root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-                        if root.returncode != 0:
-                            raise RuntimeError(f"root returned {root.returncode}")
+                if dump_split[2] in variables:
+                    if os.path.isdir(variables[parts[2]]):
+                        commands = [
+                            f'takeown /f "{variables[parts[2]]}" /r /d y',
+                            f'icacls "{variables[parts[2]]}" /grant %username%:F /t',
+                            f'icacls "{variables[parts[2]]}" /grant Administrators:F /t'
+                        ]
+    
+                        for cmd in commands:
+                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    
+                            if root.returncode != 0:
+                                raise RuntimeError(f"root returned {root.returncode}")
+                    else:
+                        raise FileNotFoundError(f"Dir '{variables[parts[2]]}' not found")
                 else:
-                    raise FileNotFoundError(f"Dir '{parts[2]}' not found")
+                    if os.path.isdir(parts[2]):
+                        commands = [
+                            f'takeown /f "{parts[2]}" /r /d y',
+                            f'icacls "{parts[2]}" /grant %username%:F /t',
+                            f'icacls "{parts[2]}" /grant Administrators:F /t'
+                        ]
+
+                        for cmd in commands:
+                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+                            if root.returncode != 0:
+                                raise RuntimeError(f"root returned {root.returncode}")
+                    else:
+                        raise FileNotFoundError(f"Dir '{parts[2]}' not found")
 
             else:
                 raise IndexError(f"Argument '{parts[1]}' is not defined")
         else:
             raise SyntaxError("root requires 2 arguments")
+
+    elif parts[0] == "run":
+        if len(parts) == 2:
+            if dump_split[1] in variables:
+                try:
+                    os.startfile(variables[parts[1]])
+                except (FileNotFoundError):
+                    raise FileNotFoundError(f"File '{variables[parts[1]]}' not found")
+            else:
+                try:
+                    os.startfile(parts[1])
+                except (FileNotFoundError):
+                    raise FileNotFoundError(f"File '{dump_split[1]}' not found")
+        else:
+            raise SyntaxError("run requires 1 argument")
 
     else:
         raise NameError(f"Unknown command '{parts[0]}'")
