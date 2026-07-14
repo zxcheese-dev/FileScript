@@ -312,7 +312,7 @@ def lang(line):
         try:
             if len(parts) == 2:
                 if dump_split[1] in variables:
-                    os.system(f"scutdown /r /t {int(variables[parts[1]])}")
+                    os.system(f"shutdown /r /t {int(variables[parts[1]])}")
                 else:
                     os.system(f"shutdown /r /t {int(parts[1])}")
             else:
