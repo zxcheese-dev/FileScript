@@ -6,4 +6,4 @@
 
 *Now FileScript has functions root and reboot, making FileScript more system-oriented*
 
-*Last update fixed types and get new function: count*
+*Last update get new function: AutoReg*
