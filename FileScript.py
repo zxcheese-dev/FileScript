@@ -5,9 +5,12 @@ import shutil
 import subprocess
 import re
 import time
+import winreg
+import openpyxl
 
 variables = {}
 skip = []
+excel = []
 
 def num_check(arg):
     try:
@@ -394,6 +397,26 @@ def lang(line):
         else:
             raise SyntaxError("root requires 2 arguments")
 
+    elif parts[0] == "AutoReg":
+        if len(parts) == 3:
+            app_name = parts[2]
+            if parts[1] == "self":
+                script_path = sys.argv[1]
+            else:
+                script_path = parts[1]
+
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, script_path)
+                winreg.CloseKey(key)
+
+            except FileNotFoundError:
+                raise FileNotFoundError("Path '{script_path}' not found")
+        else:
+            raise SyntaxError("AutoReg requires 2 arguments")
+
     elif parts[0] == "run":
         if len(parts) == 2:
             if dump_split[1] in variables:
@@ -435,3 +458,5 @@ if __name__ == "__main__":
         while True:
             line = input("> ")
             lang(line)
+
+# FileScript interpreter Powered by zxcheese python developer
