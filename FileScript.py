@@ -6,7 +6,6 @@ import subprocess
 import re
 import time
 import winreg
-import openpyxl
 
 variables = {}
 skip = []
