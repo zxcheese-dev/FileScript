@@ -10,7 +10,6 @@ import openpyxl
 
 variables = {}
 skip = []
-excel = []
 
 def num_check(arg):
     try:
