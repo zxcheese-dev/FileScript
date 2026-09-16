@@ -6,6 +6,7 @@ import subprocess
 import re
 import time
 import winreg
+import openpyxl
 
 variables = {}
 skip = []
@@ -32,6 +33,9 @@ def tokenise(value, is_string=False):
     except ValueError:
         pass
 
+    if value in commands:
+        commands[value]()
+
     raise NameError(f"Name '{value}' not defined")
 
 def compare(a, b, op):
@@ -43,7 +47,61 @@ def compare(a, b, op):
     if op == ">=": return a >= b
     raise SyntaxError(f"Unknown operator '{op}'")
 
+
+def count(num, op, num2):
+    if not skip or skip[-1]:
+        if num in variables or num2 in variables:
+            try:
+                if num in variables and not num2 in variables:
+                    if op == "+": return variables[num] + num_check(num2)
+                    if op == "-": return variables[num] - num_check(num2)
+                    if op == "*": return variables[num] * num_check(num2)
+                    if op == "/": return variables[num] / num_check(num2)
+                    if op == "^": return variables[num] ^ num_check(num2)
+                elif num2 in variables and not num in variables:
+                    if op == "+": return num_check(num) + variables[num2]
+                    if op == "-": return num_check(num) - variables[num2]
+                    if op == "*": return num_check(num) * variables[num2]
+                    if op == "/": return num_check(num) / variables[num2]
+                    if op == "^": return num_check(num) ^ variables[num2]
+                else:
+                    if op == "+": return variables[num] + variables[num2]
+                    if op == "-": return variables[num] - variables[num2]
+                    if op == "*": return variables[num] * variables[num2]
+                    if op == "/": return variables[num] / variables[num2]
+                    if op == "^": return variables[num] ^ variables[num2]
+            except (ValueError):
+                raise ValueError("count cannot provide arguments that not number")
+        else:
+            try:
+                if op == "+": return num_check(num) + num_check(num2)
+                if op == "-": return num_check(num) - num_check(num2)
+                if op == "*": return num_check(num) * num_check(num2)
+                if op == "/": return num_check(num) / num_check(num2)
+            except (ValueError):
+                raise ValueError("count cannot provide arguments that not number")
+
+def returnabe(*args):
+    if not skip or skip[-1]:
+        if len(args) >= 1:
+            if args[0] in commands:
+                return tokenise(commands[args[0]](args[1:]))
+            elif args[0] in variables:
+                return tokenise(variables[args[0]])
+            else:
+                raise NameError("Name '{args[0]}' is not defined")
+        else:
+            raise SyntaxError("Return requires 1 argument")
+
 def lang(line):
+    global commands
+    global parts
+
+    commands = {
+        "count": count,
+        "return": returnabe
+    }
+
     if not line:
         return
 
@@ -52,7 +110,7 @@ def lang(line):
 
     if parts[0] == "println":
         if not skip or skip[-1]:
-            if len(parts) == 2:
+            if len(parts) >= 2:
                 if dump_split[1] in variables:
                     print(variables[dump_split[1]])
                 else:
@@ -63,10 +121,15 @@ def lang(line):
     elif parts[0] == "var":
         if not skip or skip[-1]:
             if len(parts) >= 3:
-                raw_val = line.split(maxsplit=2)[2]
-                is_str = (raw_val.startswith('"') and raw_val.endswith('"')) or (raw_val.startswith("'") and raw_val.endswith("'"))
-                
-                variables[parts[1]] = tokenise(parts[2], is_string=is_str)
+                if parts[2] in commands:
+                    args = parts[3:]
+
+                    variables[parts[1]] = commands[parts[2]](*args)
+                else:
+                    raw_val = line.split(maxsplit=2)[2]
+                    is_str = (raw_val.startswith('"') and raw_val.endswith('"')) or (raw_val.startswith("'") and raw_val.endswith("'"))
+
+                    variables[parts[1]] = tokenise(parts[2], is_string=is_str)
             else:
                 raise SyntaxError("var requires 2 arguments")
 
@@ -77,51 +140,23 @@ def lang(line):
             else:
                 raise SyntaxError("input requires 1 argument")
 
-    elif parts[0] == "count":
-        if not skip or skip[-1]:
-            if len(parts) == 4:
-                if dump_split[1] in variables or dump_split[3] in variables:
-                    try:
-                        if dump_split[1] in variables and not dump_split[3] in variables:
-                            if parts[2] == "+": print(variables[parts[1]] + num_check(parts[3]))
-                            if parts[2] == "-": print(variables[parts[1]] - num_check(parts[3]))
-                            if parts[2] == "*": print(variables[parts[1]] * num_check(parts[3]))
-                            if parts[2] == "/": print(variables[parts[1]] / num_check(parts[3]))
-                        elif dump_split[3] in variables and not dump_split[1] in variables:
-                            if parts[2] == "+": print(num_check(parts[1]) + variables[parts[3]])
-                            if parts[2] == "-": print(num_check(parts[1]) - variables[parts[3]])
-                            if parts[2] == "*": print(num_check(parts[1]) * variables[parts[3]])
-                            if parts[2] == "/": print(num_check(parts[1]) / variables[parts[3]])
-                        else:
-                            if parts[2] == "+": print(variables[parts[1]] + variables[parts[3]])
-                            if parts[2] == "-": print(variables[parts[1]] - variables[parts[3]])
-                            if parts[2] == "*": print(variables[parts[1]] * variables[parts[3]])
-                            if parts[2] == "/": print(variables[parts[1]] / variables[parts[3]])
-                    except (ValueError):
-                        raise ValueError("count cannot provide arguments that not number")
+    elif parts[0] == "wait":
+        if len(parts) >= 2:
+            if parts[1] in commands:
+                args = parts[2:]
+
+                time.sleep(commands[parts[1]](*args))
+            else:
+                if dump_split[1] in variables:
+                    time.sleep(variables[dump_split[1]])
                 else:
                     try:
-                        if parts[2] == "+": print(num_check(parts[1]) + num_check(parts[3]))
-                        if parts[2] == "-": print(num_check(parts[1]) - num_check(parts[3]))
-                        if parts[2] == "*": print(num_check(parts[1]) * num_check(parts[3]))
-                        if parts[2] == "/": print(num_check(parts[1]) / num_check(parts[3]))
+                        time.sleep(float(parts[1]))
                     except (ValueError):
-                        raise ValueError("count cannot provide arguments that not number")
-            else:
-                raise SyntaxError("count requires 3 arguments")
-
-    elif parts[0] == "wait":
-        if len(parts) == 2:
-            if dump_split[1] in variables:
-                time.sleep(variables[dump_split[1]])
-            else:
-                try:
-                    time.sleep(float(parts[1]))
-                except (ValueError):
-                    if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
-                        raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
-                    else:
-                        raise ValueError(f"Variable '{parts[1]}' is not defined")
+                        if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                            raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
+                        else:
+                            raise ValueError(f"Variable '{parts[1]}' is not defined")
         else:
             raise SyntaxError("wait requires 1 argument")
 
@@ -433,6 +468,15 @@ def lang(line):
     else:
         raise NameError(f"Unknown command '{parts[0]}'")
 
+
+    if "count" in parts:
+            ind = parts.index("count")
+            num = ind + 1
+            op = ind + 2
+            num2 = ind + 3
+    
+            count(num, op, num2)
+
 def run_file(filename):
     if not filename.endswith(".filesc"):
         print("EndswithError: Only .filesc files are supported")
@@ -457,4 +501,4 @@ if __name__ == "__main__":
             line = input("> ")
             lang(line)
 
-# FileScript interpreter Powered by zxcheese python developer
+# FileScript interpreter Powered by zxcheese Python developer
