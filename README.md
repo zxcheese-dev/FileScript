@@ -6,4 +6,11 @@
 
 *Now FileScript has functions root and reboot, making FileScript more system-oriented*
 
-*Last update get new function: AutoReg*
+*Last update get revolution of FileScript: added return and get function arguments*
+*Example:*
+`var num count 1 + 2`
+`println num`
+
+`var num 1`
+`var num2 return num`
+`println num2`
