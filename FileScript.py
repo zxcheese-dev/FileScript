@@ -6,7 +6,6 @@ import subprocess
 import re
 import time
 import winreg
-import openpyxl
 
 variables = {}
 skip = []
@@ -23,15 +22,15 @@ def tokenise(value, is_string=False):
 
     if value in variables:
         return variables[value]
-
-    if value.lower() == "true": return True
-    if value.lower() == "false": return False
-
+    
     try:
         if '.' in value: return float(value)
         return int(value)
     except ValueError:
         pass
+
+    if value.lower() == "true": return True
+    if value.lower() == "false": return False
 
     if value in commands:
         commands[value]()
@@ -85,21 +84,59 @@ def returnabe(*args):
     if not skip or skip[-1]:
         if len(args) >= 1:
             if args[0] in commands:
-                return tokenise(commands[args[0]](args[1:]))
+                return commands[args[0]](args[1:])
             elif args[0] in variables:
-                return tokenise(variables[args[0]])
+                return variables[args[0]]
             else:
-                raise NameError("Name '{args[0]}' is not defined")
+                raise NameError(f"Name '{args[0]}' is not defined")
         else:
             raise SyntaxError("Return requires 1 argument")
 
+def ls(path, type=None):
+    if not skip or skip[-1]:
+        files = []
+        if type == "file":
+            for item in os.listdir(path):
+                full_path = os.path.join(path, item)
+                
+                if os.path.isfile(full_path):
+                    files.append(item)
+        elif type == "dir":
+            for item in os.listdir(path):
+                full_path = os.path.join(path, item)
+
+                if os.path.isdir(full_path):
+                    files.append(item)
+        elif type == None:
+            if path in variables:
+                for item in os.listdir(variables[path]):
+                    full_path = os.path.join(variables[path], item)
+
+                    if os.path.isdir(full_path):
+                        files.append(f"[DIR] {item}")
+                    elif os.path.isfile(full_path):
+                        files.append(f"[FILE] {item}")
+            else:
+                for item in os.listdir(path):
+                    full_path = os.path.join(path, item)
+
+                    if os.path.isdir(full_path):
+                        files.append(f"[DIR] {item}")
+                    elif os.path.isfile(full_path):
+                        files.append(f"[FILE] {item}")
+
+        else:
+            raise IndexError(f"Argument '{type}' is not defined")
+
+        return files
+
 def lang(line):
     global commands
-    global parts
 
     commands = {
         "count": count,
-        "return": returnabe
+        "return": returnabe,
+        "ls": ls
     }
 
     if not line:
@@ -301,48 +338,6 @@ def lang(line):
                         raise NameError(f"Name '{parts[1]}' not defined")
             else:
                 raise SyntaxError("remove requires 1 argument")
-
-    elif parts[0] == "ls":
-        if not skip or skip[-1]:
-            if len(parts) >= 2:
-                if len(parts) == 3:
-                    if parts[2] == "file":
-                        for item in os.listdir(parts[1]):
-                            full_path = os.path.join(parts[1], item)
-                            
-                            if os.path.isfile(full_path):
-                                print(item)
-                    elif parts[2] == "dir":
-                        for item in os.listdir(parts[1]):
-                            full_path = os.path.join(parts[1], item)
-
-                            if os.path.isdir(full_path):
-                                print(item)
-                    else:
-                        raise IndexError(f"Argument '{parts[2]}' is not defined")
-                    
-                else:
-                    if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
-                        for item in os.listdir(parts[1]):
-                            full_path = os.path.join(parts[1], item)
-
-                            if os.path.isdir(full_path):
-                                print(f"[DIR] {item}")
-                            elif os.path.isfile(full_path):
-                                print(f"[FILE] {item}")
-                    else:
-                        if parts[1] in variables:
-                            for item in os.listdir(variables[parts[1]]):
-                                full_path = os.path.join(variables[parts[1]], item)
-
-                                if os.path.isdir(full_path):
-                                    print(f"[DIR] {item}")
-                                elif os.path.isfile(full_path):
-                                    print(f"[FILE] {item}")
-                        else:
-                            raise NameError(f"Name '{parts[1]}' not defined")
-            else:
-                raise SyntaxError("ls requires 1 or 2 arguments")
     
     elif parts[0] == "reboot":
         try:
@@ -467,15 +462,6 @@ def lang(line):
 
     else:
         raise NameError(f"Unknown command '{parts[0]}'")
-
-
-    if "count" in parts:
-            ind = parts.index("count")
-            num = ind + 1
-            op = ind + 2
-            num2 = ind + 3
-    
-            count(num, op, num2)
 
 def run_file(filename):
     if not filename.endswith(".filesc"):
