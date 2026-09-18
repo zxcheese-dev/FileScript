@@ -464,8 +464,8 @@ def lang(line):
         raise NameError(f"Unknown command '{parts[0]}'")
 
 def run_file(filename):
-    if not filename.endswith(".filesc"):
-        print("EndswithError: Only .filesc files are supported")
+    if not filename.endswith(".fssc"):
+        print("EndswithError: Only .fssc files are supported")
         return
 
     try:
