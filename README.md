@@ -10,12 +10,12 @@
 
 *Example:*
 
-`var num count 1 + 2`
+```var num count 1 + 2
 
-`println num`
+println num```
 
-`var num 1`
+```var num 1
 
-`var num2 return num`
+var num2 return num
 
-`println num2`
+println num2```
