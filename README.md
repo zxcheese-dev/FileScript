@@ -6,7 +6,7 @@
 
 *Now FileScript has functions root and reboot, making FileScript more system-oriented*
 
-*Last update get revolution of FileScript: added return and get function arguments*
+*Last update get revolution of FileScript: added return and got function arguments*
 
 *Example:*
 
