@@ -447,7 +447,7 @@ def lang(line):
                         winreg.CloseKey(key)
 
                     except FileNotFoundError:
-                        raise FileNotFoundError("Path '{script_path}' not found")
+                        raise FileNotFoundError(f"Path '{script_path}' not found")
                 else:
                     raise SyntaxError("AutoReg requires 2 arguments")
 
