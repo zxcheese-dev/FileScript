@@ -491,9 +491,6 @@ def lang(line):
                     else:
                         break
 
-        elif parts[0] == "endfnc":
-            fncreate.append(False)
-
         else:
             if parts[0] in fncs:
                 for cmd in fncs[parts[0]]:
