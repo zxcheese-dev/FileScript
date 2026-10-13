@@ -148,7 +148,10 @@ def lang(line):
     parts = shlex.split(line)
 
     if not fncreate or not fncreate[-1]:
-        if parts[0] == "println":
+        if parts[0] == "//":
+            pass
+
+        elif parts[0] == "println":
             if not skip or skip[-1]:
                 if len(parts) >= 2:
                     if dump_split[1] in variables:
