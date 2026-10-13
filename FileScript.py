@@ -82,7 +82,7 @@ def count(num, op, num2):
             except (ValueError):
                 raise ValueError("count cannot provide arguments that not number")
 
-def returnabe(*args):
+def returnable(*args):
     if not skip or skip[-1]:
         if len(args) >= 1:
             if args[0] in commands:
@@ -137,7 +137,7 @@ def lang(line):
 
     commands = {
         "count": count,
-        "return": returnabe,
+        "return": returnable,
         "ls": ls
     }
 
