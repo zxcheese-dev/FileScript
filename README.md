@@ -6,7 +6,7 @@
 
 *Example:*
 
-```FileScript
+```bash
 var file_exist ?exist "file.txt"
 println file_exist
 ```
@@ -15,7 +15,7 @@ println file_exist
 
 *Example:*
 
-```FileScript
+```bash
 // counting 1 + 1
 println count 1 + 1
 
