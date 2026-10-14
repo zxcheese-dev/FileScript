@@ -4,20 +4,21 @@
 
 *Now FileScript has function ```?exist``` making FileScript more comfortable for file operations*
 
-*Last update get revolution of FileScript: added return and got function arguments*
+*Example:*
+
+```
+var file_exist ?exist "file.txt"
+println file_exist
+```
+
+*Also ```println``` can print result of returnable functions and also it has comments ```//```*
 
 *Example:*
 
 ```
-var num count 1 + 2
+// counting 1 + 1
+println count 1 + 1
 
-println num
-```
-
-```
-var num 1
-
-var num2 return num
-
-println num2
+// outputs existence of text.txt (True/False)
+println ?exist "text.txt"
 ```
