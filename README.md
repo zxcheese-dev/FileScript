@@ -2,9 +2,7 @@
 
 *Simple FileScript programming language for more convenient work with files and the system*
 
-*After update, FileScript uses real exceptions for script errors*
-
-*Now FileScript has functions root and reboot, making FileScript more system-oriented*
+*Now FileScript has function ```?exist``` making FileScript more comfortable for file operations*
 
 *Last update get revolution of FileScript: added return and got function arguments*
 
