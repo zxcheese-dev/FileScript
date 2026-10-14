@@ -192,6 +192,8 @@ def lang(line):
             if not skip or skip[-1]:
                 if len(parts) == 2:
                     variables[parts[1]] = input()
+                elif len(parts) == 3:
+                	variables[parts[2]] = input(parts[1])
                 else:
                     raise SyntaxError("input requires 1 argument")
 
