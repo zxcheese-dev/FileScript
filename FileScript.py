@@ -181,24 +181,25 @@ def lang(line):
                     raise SyntaxError("input requires 1 argument")
 
         elif parts[0] == "wait":
-            if len(parts) >= 2:
-                if parts[1] in commands:
-                    args = parts[2:]
+            if not skip or skip[-1]:
+                if len(parts) >= 2:
+                    if parts[1] in commands:
+                        args = parts[2:]
 
-                    time.sleep(commands[parts[1]](*args))
-                else:
-                    if dump_split[1] in variables:
-                        time.sleep(variables[dump_split[1]])
+                        time.sleep(commands[parts[1]](*args))
                     else:
-                        try:
-                            time.sleep(float(parts[1]))
-                        except (ValueError):
-                            if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
-                                raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
-                            else:
-                                raise ValueError(f"Variable '{parts[1]}' is not defined")
-            else:
-                raise SyntaxError("wait requires 1 argument")
+                        if dump_split[1] in variables:
+                            time.sleep(variables[dump_split[1]])
+                        else:
+                            try:
+                                time.sleep(float(parts[1]))
+                            except (ValueError):
+                                if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                                    raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
+                                else:
+                                    raise ValueError(f"Variable '{parts[1]}' is not defined")
+                else:
+                    raise SyntaxError("wait requires 1 argument")
 
         elif parts[0] == "if":
             if not skip or not False in skip:
@@ -226,9 +227,16 @@ def lang(line):
                 else:
                     raise SyntaxError("if requires 3 arguments")
 
+        elif parts[0] == "else":
+            if len(parts) == 1:
+                if not skip[-1]:
+                    skip.append(True)
+            else:
+                raise SyntaxError("Well, else dont require arguments")
+
         elif parts[0] == "endif":
             if skip:
-                skip.pop()
+                skip.clear()
 
         elif parts[0] == "open":
             if not skip or skip[-1]:
@@ -470,10 +478,18 @@ def lang(line):
         elif parts[0] == "import":
             if not skip or skip[-1]:
                 if len(parts) == 2:
-                    try:
-                        run_file(parts[1])
-                    except FileNotFoundError:
-                        raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                    if parts[1].endswith(".fssc"):
+                        try:
+                            run_file(parts[1])
+                        except FileNotFoundError:
+                            raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                    elif parts[1].endswith(".py"):
+                        try:
+                            with open(parts[1], "r", encoding="utf-8") as f:
+                                exec(f.read(), globals())
+                        except FileNotFoundError:
+                            raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                
                 else:
                     raise SyntaxError("import requires 1 argument")
 
@@ -493,6 +509,11 @@ def lang(line):
 
         else:
             if parts[0] in fncs:
+                args = parts[1:]
+                arg_names = fncs[parts[0]]["args"]
+                for i, arg in enumerate(args):
+                    variables[arg_names[i]] = tokenise(arg)
+
                 for cmd in fncs[parts[0]]:
                     lang(cmd)
             else:
