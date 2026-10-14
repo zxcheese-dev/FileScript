@@ -2,7 +2,7 @@
 
 *Simple FileScript programming language for more convenient work with files and the system*
 
-*Now FileScript has function ```?exist``` making FileScript more comfortable for file operations*
+*Now FileScript has function* ```?exist``` *making FileScript more comfortable for file operations*
 
 *Example:*
 
@@ -11,7 +11,7 @@ var file_exist ?exist "file.txt"
 println file_exist
 ```
 
-*Also ```println``` can print result of returnable functions and also it has comments ```//```*
+*Also* ```println``` *now can print result of returnable functions and also it has comments* ```//```
 
 *Example:*
 
@@ -23,7 +23,7 @@ println count 1 + 1
 println ?exist "text.txt"
 ```
 
-*FileScript instruction ```input``` now updated and can output text before input*
+*FileScript instruction* ```input``` *now updated and can output text before input*
 
 ```go
 input text    // just input
