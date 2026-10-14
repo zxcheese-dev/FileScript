@@ -31,8 +31,8 @@ def tokenise(value, is_string=False):
     except ValueError:
         pass
 
-    if value.lower() == "true": return True
-    if value.lower() == "false": return False
+    if value == "True": return True
+    if value == "False": return False
 
     if value in commands:
         commands[value]()
@@ -132,13 +132,23 @@ def ls(path, type=None):
 
         return files
 
+def exist(path):
+    if not skip or skip[-1]:
+        if path in variables:
+            res = os.path.exists(variables[path])
+        else:
+            res = os.path.exists(path)
+
+        return res
+
 def lang(line):
     global commands
 
     commands = {
         "count": count,
         "return": returnable,
-        "ls": ls
+        "ls": ls,
+        "?exist": exist
     }
 
     dump_split = line.split()
@@ -154,7 +164,12 @@ def lang(line):
                     if dump_split[1] in variables:
                         print(variables[dump_split[1]])
                     else:
-                        raise NameError(f"Name '{dump_split[1]}' not defined")
+                        if dump_split[1] in commands:
+                            args = parts[2:]
+
+                            print(commands[parts[1]](*args))
+                        else:
+                            raise NameError(f"Name '{dump_split[1]}' not defined")
                 else:
                     raise SyntaxError("println requires 1 value")
 
