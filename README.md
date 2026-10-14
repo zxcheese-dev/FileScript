@@ -26,6 +26,9 @@ println ?exist "text.txt"
 *FileScript instruction* ```input``` *now updated and can output text before input*
 
 ```go
-input text    // just input
-input "type here your text: " text    // input with text
+// just input
+input text
+
+// input with text
+input "type here your text: " text
 ```
