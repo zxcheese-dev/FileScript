@@ -22,3 +22,10 @@ println count 1 + 1
 // outputs existence of text.txt (True/False)
 println ?exist "text.txt"
 ```
+
+*FileScript instruction ```input``` now updated and can output text before input*
+
+```go
+input text    // just input
+input "type here your text: " text    // input with text
+```
