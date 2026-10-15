@@ -2,6 +2,7 @@
 
 *Simple FileScript programming language for more convenient work with files and the system*
 
+*In last update you can do... absolutely nothing (added* ```pass```*)*
 
 (*Fixed stack* ```skip```)
 
