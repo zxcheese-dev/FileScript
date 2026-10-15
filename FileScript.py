@@ -195,7 +195,7 @@ def lang(line):
                 elif len(parts) == 3:
                 	variables[parts[2]] = input(parts[1])
                 else:
-                    raise SyntaxError("input requires 1 argument")
+                    raise SyntaxError("input requires 1 or 2 arguments")
 
         elif parts[0] == "wait":
             if not skip or skip[-1]:
