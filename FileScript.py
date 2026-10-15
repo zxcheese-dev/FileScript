@@ -246,14 +246,13 @@ def lang(line):
 
         elif parts[0] == "else":
             if len(parts) == 1:
-                if not skip[-1]:
-                    skip.append(True)
+                skip[-1] = not skip[-1]
             else:
                 raise SyntaxError("Well, else dont require arguments")
 
         elif parts[0] == "endif":
             if skip:
-                skip.clear()
+                skip.pop()
 
         elif parts[0] == "open":
             if not skip or skip[-1]:
