@@ -2,6 +2,9 @@
 
 *Simple FileScript programming language for more convenient work with files and the system*
 
+
+(*Fixed stack* ```skip```)
+
 *Now FileScript has function* ```?exist``` *making FileScript more comfortable for file operations*
 
 *Example:*
