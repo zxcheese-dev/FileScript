@@ -1,6 +1,6 @@
 #define MyAppName "FileScript"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "cheese-dev"
+#define MyAppPublisher "zxcheese-dev"
 #define MyAppURL "https://github.com/zxcheese-dev/FileScript"
 #define MyProgExeName "FileScript.exe" 
 
@@ -25,7 +25,7 @@ WizardStyle=modern
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Tasks]
-Name: "modpath"; Description: "Добавить {#MyAppName} в переменную окружения PATH (рекомендуется)"; Flags: unchecked
+Name: "modpath"; Description: "Г„Г®ГЎГ ГўГЁГІГј {#MyAppName} Гў ГЇГҐГ°ГҐГ¬ГҐГ­Г­ГіГѕ Г®ГЄГ°ГіГ¦ГҐГ­ГЁГї PATH (Г°ГҐГЄГ®Г¬ГҐГ­Г¤ГіГҐГІГ±Гї)"; Flags: unchecked
 
 [Files]
 Source: "C:\Users\Lenovo\Desktop\FileScript\FileScript.exe"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
