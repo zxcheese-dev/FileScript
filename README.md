@@ -4,6 +4,17 @@
 
 *In last update you can do... absolutely nothing (added* ```pass```*)*
 
+*Example:*
+
+```go
+var text "hello"
+
+if text == "hello"
+  // doing absolutely nothing
+  pass
+endif
+```
+
 (*Fixed stack* ```skip```)
 
 *Now FileScript has function* ```?exist``` *making FileScript more comfortable for file operations*
