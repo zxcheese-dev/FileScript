@@ -24,6 +24,7 @@ endif
 *Example:*
 
 ```go
+// it returns True or False
 var file_exist ?exist "file.txt"
 println file_exist
 ```
