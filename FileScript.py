@@ -245,10 +245,19 @@ def lang(line):
                     raise SyntaxError("if requires 3 arguments")
 
         elif parts[0] == "else":
-            if len(parts) == 1:
-                skip[-1] = not skip[-1]
+            if len(skip) >= 2:
+                if skip[-2]:
+                    if len(parts) == 1:
+                        skip[-1] = not skip[-1]
+                    else:
+                        raise SyntaxError("Well, else dont require arguments")
+                else:
+                    pass
             else:
-                raise SyntaxError("Well, else dont require arguments")
+                if len(parts) == 1:
+                    skip[-1] = not skip[-1]
+                else:
+                    raise SyntaxError("Well, else dont require arguments")
 
         elif parts[0] == "endif":
             if skip:
@@ -490,6 +499,12 @@ def lang(line):
                             raise FileNotFoundError(f"File '{dump_split[1]}' not found")
                 else:
                     raise SyntaxError("run requires 1 argument") 
+
+        elif parts[0] == "pass":
+            if len(parts) == 1:
+                pass
+            else:
+                raise SyntaxError("Are you serious right now?")
 
         elif parts[0] == "import":
             if not skip or skip[-1]:
