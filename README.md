@@ -17,7 +17,13 @@ if text == "hello"
 endif
 ```
 
-(*Fixed stack* ```skip```)
+*FileScript now can return errors with* ```error``` *function*
+
+*Example:*
+
+```go
+error SyntaxError "invalid syntax"
+```
 
 *Now FileScript has function* ```?exist``` *making FileScript more comfortable for file operations*
 
