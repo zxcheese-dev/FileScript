@@ -151,6 +151,17 @@ def lang(line):
         "?exist": exist
     }
 
+    errors = {
+        "SyntaxError": SyntaxError,
+        "KeyError": KeyError,
+        "FileNotFoundError": FileNotFoundError,
+        "ModuleNotFoundError": ModuleNotFoundError,
+        "RuntimeError": RuntimeError,
+        "NameError": NameError,
+        "ValueError": ValueError,
+        "FileExistError": FileExistsError
+    }
+
     dump_split = line.split()
     parts = shlex.split(line)
 
@@ -505,6 +516,15 @@ def lang(line):
                 pass
             else:
                 raise SyntaxError("Are you serious right now?")
+        
+        elif parts[0] == "error":
+            if len(parts) == 3:
+                try:
+                    raise errors[dump_split[1]](parts[2])
+                except (KeyError):
+                    raise KeyError(f"Undefined error '{parts[1]}'")
+            else:
+                raise SyntaxError("error requires 2 arguments")
 
         elif parts[0] == "import":
             if not skip or skip[-1]:
