@@ -17,34 +17,14 @@ if text == "hello"
 endif
 ```
 
+*Finally, FileScript almost can support Linux, edited commands* '''root''' '''AutoReg''' '''reboot''' *and* '''run''' *and edited winreg import (but unfortunatelly Linux support now needs fix for more convenient work with operating system)*
+
 *FileScript now can return errors with* ```error``` *function*
 
 *Example:*
 
 ```go
 error SyntaxError "invalid syntax"
-```
-
-*Now FileScript has function* ```?exist``` *making FileScript more comfortable for file operations*
-
-*Example:*
-
-```go
-// it returns True or False
-var file_exist ?exist "file.txt"
-println file_exist
-```
-
-*Also* ```println``` *now can print result of returnable functions and also it has comments* ```//```
-
-*Example:*
-
-```go
-// counting 1 + 1
-println count 1 + 1
-
-// outputs existence of text.txt (True/False)
-println ?exist "text.txt"
 ```
 
 *FileScript instruction* ```input``` *now updated and can output text before input*
