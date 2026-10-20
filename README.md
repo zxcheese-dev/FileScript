@@ -17,7 +17,7 @@ if text == "hello"
 endif
 ```
 
-*Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py```, edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with operating system)*
+*Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py```, edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with linux)*
 
 *FileScript now can return errors with* ```error``` *function*
 
