@@ -4,28 +4,9 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
-*In last update you can do... absolutely nothing (added* ```pass```*)*
-
-*Example:*
-
-```go
-var text "hello"
-
-if text == "hello"
-  // doing absolutely nothing
-  pass
-endif
-```
+*Added new function* ```always``` *, it can ignore the skip stack for one command even if last element of stack is False*
 
 *Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py```, edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with linux)*
-
-*FileScript now can return errors with* ```error``` *function*
-
-*Example:*
-
-```go
-error SyntaxError "invalid syntax"
-```
 
 *FileScript instruction* ```input``` *now updated and can output text before input*
 
