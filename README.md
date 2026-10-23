@@ -4,7 +4,7 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
-*Added new function* ```always``` * it can ignore the skip stack for one command even if last element of stack is False*
+*Added new function* ```always``` *it can ignore the skip stack for one command even if last element of stack is False*
 
 *Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py```, edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with linux)*
 
