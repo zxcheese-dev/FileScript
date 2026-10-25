@@ -14,6 +14,7 @@ skip = []
 fncs = {}
 fncreate = []
 always = ["endif"]
+cmdlist = ["println", "var", "input", "open", "write", "add", "create", "wait", "fnc", "endfnc", "count", "return", "ls", "?exist", "if", "else", "endif", "remove", "root", "reboot", "AutoReg", "run", "pass", "error", "import", "always", "enough"]
 
 def num_check(arg):
     try:
@@ -145,6 +146,7 @@ def exist(path):
         return res
 
 def lang(line):
+    global cmdlist
     global commands
 
     commands = {
@@ -205,7 +207,13 @@ def lang(line):
                 if len(parts) == 2:
                     variables[parts[1]] = input()
                 elif len(parts) == 3:
-                    variables[parts[2]] = input(parts[1])
+                    if (dump_split[1][0][0] == '"' and dump_split[-2][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-2][-1][-1] == "'"):
+                        variables[parts[2]] = input(parts[1])
+                    else:
+                        if parts[1] in variables:
+                            variables[parts[2]] = input(parts[1])
+                        else:
+                            raise NameError(f"Name '{parts[1]}' is not defined")
                 else:
                         raise SyntaxError("input requires 1 or 2 arguments")
 
@@ -550,9 +558,27 @@ def lang(line):
 
             elif parts[0] == "always":
                 if len(parts) == 2:
-                    always.append(parts[1])
+                    if parts[1] in cmdlist or parts[1] in fncreate:
+                        always.append(parts[1])
+                    else:
+                        raise NameError(f"Function '{parts[1]}' doesn't exist")
                 else:
                     raise SyntaxError("always requires 1 argument")
+            
+            elif parts[0] == "enough":
+                if len(parts) == 2:
+                    if len(always) > 0:
+                        if parts[1] in always:
+                            if parts[1] in cmdlist or parts[1] in fncreate:
+                                always.remove(parts[1])
+                            else:
+                                raise NameError(f"Function '{parts[1]}' doesn't exist")
+                        else:
+                            raise ValueError(f"Function '{parts[1]}' didn't declared with 'always'")
+                    else:
+                        raise ValueError(f"'always' stack is empty")
+                else:
+                    raise SyntaxError("enough requires 1 argument")
 
             else:
                 if parts[0] in fncs:
