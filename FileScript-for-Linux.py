@@ -7,14 +7,14 @@ import shutil
 import subprocess
 import re
 import time
-if sys.platform == "win32":
-    import winreg
+import winreg
 
 variables = {}
 skip = []
 fncs = {}
 fncreate = []
 always = ["endif"]
+cmdlist = ["println", "var", "input", "open", "write", "add", "create", "wait", "fnc", "endfnc", "count", "return", "ls", "?exist", "if", "else", "endif", "remove", "root", "reboot", "AutoReg", "run", "pass", "error", "import", "always", "enough"]
 
 def num_check(arg):
     try:
@@ -600,6 +600,21 @@ def lang(line):
                     always.append(parts[1])
                 else:
                     raise SyntaxError("always requires 1 argument")
+            
+            elif parts[0] == "enough":
+                if len(parts) == 2:
+                    if len(always) > 0:
+                        if parts[1] in always:
+                            if parts[1] in cmdlist or parts[1] in fncreate:
+                                always.remove(parts[1])
+                            else:
+                                raise NameError(f"Function '{parts[1]}' doesn't exist")
+                        else:
+                            raise ValueError(f"Function '{parts[1]}' didn't declared with 'always'")
+                    else:
+                        raise ValueError(f"'always' stack is empty")
+                else:
+                    raise SyntaxError("enough requires 1 argument")
 
             else:
                 if parts[0] in fncs:
