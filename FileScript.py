@@ -8,6 +8,7 @@ import subprocess
 import re
 import time
 import winreg
+import webbrowser
 
 variables = {}
 skip = []
@@ -215,7 +216,7 @@ def lang(line):
                         else:
                             raise NameError(f"Name '{parts[1]}' is not defined")
                 else:
-                        raise SyntaxError("input requires 1 or 2 arguments")
+                    raise SyntaxError("input requires 1 or 2 arguments")
 
             elif parts[0] == "wait":
                 if len(parts) >= 2:
@@ -534,7 +535,10 @@ def lang(line):
                             raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
                     elif parts[1].endswith(".py"):
                         try:
-                            with open(parts[1], "r", encoding="utf-8") as f:
+                            interpreter_dir = os.path.dirname(os.path.abspath(__file__))
+                            module_path = os.path.join(interpreter_dir, parts[1])
+
+                            with open(module_path, "r", encoding="utf-8") as f:
                                 exec(f.read(), globals())
                         except FileNotFoundError:
                             raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
@@ -579,6 +583,18 @@ def lang(line):
                         raise ValueError(f"'always' stack is empty")
                 else:
                     raise SyntaxError("enough requires 1 argument")
+
+            elif parts[0] == "OpenLink":
+                if len(parts) == 2:
+                    if dump_split[1] in variables:
+                        webbrowser.open(variables[parts[1]])
+                    else:
+                        if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                            webbrowser.open(parts[1])
+                        else:
+                            raise ValueError(f"OpenLink cannot use value like '{parts[1]}'")
+                else:
+                    raise SyntaxError("OpenLink requires 1 argument")
 
             else:
                 if parts[0] in fncs:
