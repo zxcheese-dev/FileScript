@@ -4,6 +4,8 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
+*In the last update added new function* ```OpenLink``` *that can open links in your webbrowser*
+
 *Added new function* ```always``` *it can ignore the skip stack for one command even if the last element of stack is False*
 
 *Also in the latest update ```always``` is now not one function, this is block of code with ending* ```enough```
