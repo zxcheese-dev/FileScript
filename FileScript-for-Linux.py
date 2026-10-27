@@ -7,7 +7,9 @@ import shutil
 import subprocess
 import re
 import time
-import winreg
+if os.name == "nt":
+    import winreg
+import webbrowser
 
 variables = {}
 skip = []
@@ -383,20 +385,20 @@ def lang(line):
                     raise SyntaxError("remove requires 1 argument")
             
             elif parts[0] == "reboot":
-                        if not skip or skip[-1]:
-                            try:
-                                if len(parts) == 2:
-                                    if dump_split[1] in variables:
-                                        os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && sudo reboot &")
-                                    else:
-                                        os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && sudo reboot &")
-                                else:
-                                    raise SyntaxError("reboot requires 1 argument")
-                            except (ValueError):
-                                if parts[1] in variables:
-                                    raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
-                                else:
-                                    raise ValueError(f"Argument '{parts[1]}' cannot be integer")
+                if not skip or skip[-1]:
+                    try:
+                        if len(parts) == 2:
+                            if dump_split[1] in variables:
+                                os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && sudo reboot &")
+                            else:
+                                os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && sudo reboot &")
+                        else:
+                            raise SyntaxError("reboot requires 1 argument")
+                    except (ValueError):
+                        if parts[1] in variables:
+                            raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
+                        else:
+                            raise ValueError(f"Argument '{parts[1]}' cannot be integer")
             
             elif parts[0] == "root":
                 if not skip or skip[-1]:
@@ -519,12 +521,12 @@ def lang(line):
                             else:
                                 script_path = os.path.abspath(parts[1])
     
-                            desktop_data = f"""[Desktop Entry]
+                            desktop_data = f'''[Desktop Entry]
                                             Type=Application
                                             Name={app_name}
                                             Exec="{script_path}"
                                             X-GNOME-Autostart-enabled=true
-                                            """
+                                            '''
                             desktop_file_path = os.path.join(autostart, f"{app_name}.desktop")
                             try:
                                 with open(desktop_file_path, "w", encoding="utf-8") as f:
@@ -615,6 +617,18 @@ def lang(line):
                         raise ValueError(f"'always' stack is empty")
                 else:
                     raise SyntaxError("enough requires 1 argument")
+
+            elif parts[0] == "OpenLink":
+                if len(parts) == 2:
+                    if dump_split[1] in variables:
+                        webbrowser.open(variables[parts[1]])
+                    else:
+                        if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                            webbrowser.open(parts[1])
+                        else:
+                            raise ValueError(f"OpenLink cannot use value like '{parts[1]}'")
+                else:
+                    raise SyntaxError("OpenLink requires 1 argument")
 
             else:
                 if parts[0] in fncs:
