@@ -449,9 +449,9 @@ def lang(line):
                     try:
                         if len(parts) == 2:
                             if dump_split[1] in variables:
-                                os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && sudo reboot &")
+                                os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && reboot &")
                             else:
-                                os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && sudo reboot &")
+                                os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && reboot &")
                         else:
                             raise SyntaxError("reboot requires 1 argument")
                     except (ValueError):
