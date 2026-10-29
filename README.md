@@ -4,7 +4,45 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
-*In the last update added new function* ```OpenLink``` *that can open links in your webbrowser*
+*FileScript instruction* ```input``` *now updated and can output text before input*
+
+```go
+// just input
+input text
+
+// input with text
+input "type here your text: " text
+```
+
+*In new update FileScript got revolution, added the cycle* ```while``` *with block syntax ```while/endwhl```*
+
+*Example:*
+
+```go
+var num 1
+
+// starting cycle
+while num <= 10
+    println num
+
+    // adding 1 to num
+    var num count num + 1
+endwhl
+wait 5
+```
+
+**Also FileScript now got function* ```exec``` *that can run run FileScript code in .fssc programm*
+
+*Example:*
+
+```go
+input "type your code here: " code
+
+// running input as FileScript code
+exec code
+```
+
+*Added new function* ```OpenLink``` *that can open links in your webbrowser*
 
 *Added new function* ```always``` *it can ignore the skip stack for one command even if the last element of stack is False*
 
@@ -25,17 +63,7 @@ endif
 enough println
 ```
 
-*Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py```, edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with linux)*
-
-*FileScript instruction* ```input``` *now updated and can output text before input*
-
-```go
-// just input
-input text
-
-// input with text
-input "type here your text: " text
-```
+*Finally, FileScript almost can support Linux in file ```FileScript-for-Linux.py``` (you can try it), edited commands* ```root``` ```AutoReg``` ```reboot``` *and* ```run``` *and edited winreg import (but unfortunatelly Linux support now need fix for more convenient work with linux)*
 
 ## License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
