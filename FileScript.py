@@ -10,6 +10,9 @@ import time
 import winreg
 import webbrowser
 
+code = []
+ind = 0
+
 variables = {}
 skip = []
 fncs = {}
@@ -282,6 +285,63 @@ def lang(line):
             elif parts[0] == "endif":
                 if skip:
                     skip.pop()
+
+            elif parts[0] == "while":
+                global ind
+                if not False in skip:
+                    match = re.match(r"while\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
+                    if match:
+                        raw_left = match.group(1).strip()
+                        op = match.group(2)
+                        raw_right = match.group(3).strip()
+
+                        left_clean = shlex.split(raw_left)[0]
+                        right_clean = shlex.split(raw_right)[0]
+
+                        left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
+                        right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
+
+                        startpos = ind
+                        left = tokenise(left_clean, is_string=left_is_str)
+                        right = tokenise(right_clean, is_string=right_is_str)
+
+                        cond = compare(left, right, op)
+
+                        if cond:
+                            ind += 1
+                        else:
+                            nesting = 1
+                            skip_idx = ind + 1
+                            while skip_idx < len(code):
+                                p_skip = shlex.split(code[skip_idx]) if code[skip_idx] else []
+                                if p_skip:
+                                    if p_skip[0] == "while":
+                                        nesting += 1
+                                    elif p_skip[0] == "endwhl":
+                                        nesting -= 1
+                                        if nesting == 0:
+                                            break
+                                skip_idx += 1
+                            ind = skip_idx + 1
+                    else:
+                        raise SyntaxError("while requires 3 arguments")
+
+            elif parts[0] == "endwhl":
+                if skip:
+                    skip.pop()
+                nesting = 1
+                back_idx = ind - 1
+                while back_idx >= 0:
+                    p_back = shlex.split(code[back_idx]) if code[back_idx] else []
+                    if p_back:
+                        if p_back[0] == "endwhl":
+                            nesting += 1
+                        elif p_back[0] == "while":
+                            nesting -= 1
+                            if nesting == 0:
+                                ind = back_idx
+                                break
+                    back_idx -= 1
 
             elif parts[0] == "open":
                 if len(parts) >= 3:
@@ -596,6 +656,15 @@ def lang(line):
                 else:
                     raise SyntaxError("OpenLink requires 1 argument")
 
+            elif parts[0] == "exec":
+                if len(parts) >= 2:
+                    if dump_split[1] in variables:
+                        lang(variables[parts[1]])
+                    else:
+                        lang(parts[1])
+                else:
+                    raise SyntaxError("exec requires 1 line of code")
+
             else:
                 if parts[0] in fncs:
                     args = parts[1:]
@@ -614,16 +683,25 @@ def lang(line):
             fncs[fnc_name].append(line)
 
 def run_file(filename):
+    global code, ind
     if not filename.endswith(".fssc"):
         print("EndswithError: Only .fssc files are supported")
         return
 
     try:
         with open(filename, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    lang(line)
+            code = [line.strip() for line in f.readlines()]
+        
+        ind = 0
+        while ind < len(code):
+            line = code[ind]
+            if line:
+                old_ind = ind
+                lang(line)
+                if ind == old_ind:
+                    ind += 1
+            else:
+                ind += 1
 
     except FileNotFoundError:
         raise FileNotFoundError(f"File '{filename}' not found")
@@ -637,6 +715,10 @@ if __name__ == "__main__":
 
         while True:
             line = input("> ")
-            lang(line)
+            
+            code.append(line)
+            ind = code.index(line)
+
+            lang(code[ind])
 
 # FileScript interpreter Powered by zxcheese Python developer
