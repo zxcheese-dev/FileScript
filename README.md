@@ -46,7 +46,7 @@ exec code
 
 *Added new function* ```always``` *it can ignore the skip stack for one command even if the last element of stack is False*
 
-*Also in the latest update ```always``` is now not one function, this is block of code with ending* ```enough```
+*Also in the latest update ```always``` is now not one function, its similar to block of code with ending* ```enough```
 
 *Example:*
 
