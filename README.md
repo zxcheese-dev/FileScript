@@ -43,7 +43,7 @@ var msg1 "another while cycle is working now"
 while 1 == 1
     while 2 == 2
         while 3 == 3
-            while 4 == 4
+        while 4 == 4
                 break all
                 println msg1
             endwhl
