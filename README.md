@@ -55,7 +55,7 @@ endwhl
 // number argument
 while 1 == 1
     while 2 == 2
-	    while 3 == 3
+        while 3 == 3
             while 4 == 4
                 break 4
                 println msg1
