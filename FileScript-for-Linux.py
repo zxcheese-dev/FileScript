@@ -337,6 +337,46 @@ def lang(line):
                                 break
                     back_idx -= 1
 
+            elif parts[0] == "break":
+                if len(parts) == 2:
+                    index = ind
+                    while_count = 0
+
+                    if dump_split[1] != "all":
+                        if dump_split[1] not in variables:
+                            for i in range(int(parts[1])):
+                                while code[index] != "endwhl":
+                                    index += 1
+                                index += 1
+                        else:
+                            for i in range(variables[parts[1]]):
+                                while code[index] != "endwhl":
+                                    index += 1
+                                index += 1
+                    else:
+                        # 1. Отматываем назад и считаем, сколько while над нами
+                        back_index = ind
+                        while_count = 0
+                        while back_index > 0:
+                            back_index -= 1
+                            line = code[back_index].strip()
+                            if line:
+                                parts_back = line.split()
+                                if parts_back and parts_back[0] == "while":
+                                    while_count += 1
+                        
+                        # 2. Возвращаемся к текущему break и шагаем вперед на while_count закрывающих endwhl
+                        index = ind
+                        for i in range(while_count):
+                            while index < len(code) and code[index] != "endwhl":
+                                index += 1
+                            if index < len(code):
+                                index += 1  # перешагиваем сам endwhl
+
+                    ind = index
+                else:
+                    raise SyntaxError("break requires 1 argument")
+
             elif parts[0] == "open":
                 if len(parts) >= 3:
                     try:
@@ -459,7 +499,7 @@ def lang(line):
                             raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
                         else:
                             raise ValueError(f"Argument '{parts[1]}' cannot be integer")
-            
+
             elif parts[0] == "root":
                 if not skip or skip[-1]:
                     if len(parts) == 3:
@@ -581,12 +621,12 @@ def lang(line):
                             else:
                                 script_path = os.path.abspath(parts[1])
     
-                            desktop_data = f"""[Desktop Entry]
+                            desktop_data = f'''[Desktop Entry]
                                             Type=Application
                                             Name={app_name}
                                             Exec="{script_path}"
                                             X-GNOME-Autostart-enabled=true
-                                            """
+                                            '''
                             desktop_file_path = os.path.join(autostart, f"{app_name}.desktop")
                             try:
                                 with open(desktop_file_path, "w", encoding="utf-8") as f:
