@@ -31,6 +31,47 @@ endwhl
 wait 5
 ```
 
+*Now FileScript got function* ```break``` *that can exit from while block*
+
+*Example:*
+
+```go
+var msg "while cycle is working now"
+var msg1 "another while cycle is working now"
+
+// all argument
+while 1 == 1
+	while 2 == 2
+		while 3 == 3
+			while 4 == 4
+				break all
+				println msg1
+			endwhl
+		endwhl
+	endwhl
+	println msg
+endwhl
+
+// number argument
+while 1 == 1
+	while 2 == 2
+		while 3 == 3
+			while 4 == 4
+				break 4
+				println msg1
+			endwhl
+		endwhl
+	endwhl
+	println msg
+endwhl
+
+var msg2 "the break function is working!"
+println msg2
+
+input text
+
+```
+
 **Also FileScript now got function* ```exec``` *that can run run FileScript code in .fssc programm*
 
 *Example:*
