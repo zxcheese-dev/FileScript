@@ -360,7 +360,6 @@ def lang(line):
                                     index += 1
                                 index += 1
                     else:
-                        # 1. Отматываем назад и считаем, сколько while над нами
                         back_index = ind
                         while_count = 0
                         while back_index > 0:
@@ -370,14 +369,13 @@ def lang(line):
                                 parts_back = line.split()
                                 if parts_back and parts_back[0] == "while":
                                     while_count += 1
-                        
-                        # 2. Возвращаемся к текущему break и шагаем вперед на while_count закрывающих endwhl
+
                         index = ind
                         for i in range(while_count):
                             while index < len(code) and code[index] != "endwhl":
                                 index += 1
                             if index < len(code):
-                                index += 1  # перешагиваем сам endwhl
+                                index += 1
 
                     ind = index
                 else:
