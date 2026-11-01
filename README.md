@@ -41,27 +41,27 @@ var msg1 "another while cycle is working now"
 
 // all argument
 while 1 == 1
-	while 2 == 2
-		while 3 == 3
-			while 4 == 4
-				break all
-				println msg1
-			endwhl
-		endwhl
-	endwhl
+    while 2 == 2
+        while 3 == 3
+            while 4 == 4
+                break all
+                println msg1
+            endwhl
+        endwhl
+    endwhl
 	println msg
 endwhl
 
 // number argument
 while 1 == 1
-	while 2 == 2
-		while 3 == 3
-			while 4 == 4
-				break 4
-				println msg1
-			endwhl
-		endwhl
-	endwhl
+    while 2 == 2
+	    while 3 == 3
+		    while 4 == 4
+                break 4
+                println msg1
+            endwhl
+        endwhl
+    endwhl
 	println msg
 endwhl
 
