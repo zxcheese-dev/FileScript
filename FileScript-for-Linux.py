@@ -20,6 +20,7 @@ fncs = {}
 fncreate = []
 always = ["endif"]
 cmdlist = ["println", "var", "input", "open", "write", "add", "create", "wait", "fnc", "endfnc", "count", "return", "ls", "?exist", "if", "else", "endif", "remove", "root", "reboot", "AutoReg", "run", "pass", "error", "import", "always", "enough"]
+pycode = []
 
 def num_check(arg):
     try:
@@ -177,241 +178,230 @@ def lang(line):
     if not line or parts[0] == "//":
         return
 
-    if not fncreate or not fncreate[-1]:
-        if (not skip or skip[-1]) or parts[0] in always:
-            if parts[0] == "println":
-                if len(parts) >= 2:
-                    if dump_split[1] in variables:
-                        print(variables[dump_split[1]])
+    if not pycode or not pycode[-1]:
+        if not fncreate or not fncreate[-1]:
+            if (not skip or skip[-1]) or parts[0] in always:
+                if parts[0] == "println":
+                    if len(parts) >= 2:
+                        if dump_split[1] in variables:
+                            print(variables[dump_split[1]])
+                        else:
+                            if dump_split[1] in commands:
+                                args = parts[2:]
+
+                                print(commands[parts[1]](*args))
+                            else:
+                                raise NameError(f"Name '{dump_split[1]}' not defined")
                     else:
-                        if dump_split[1] in commands:
+                        raise SyntaxError("println requires 1 value")
+
+                elif parts[0] == "var":
+                    if len(parts) >= 3:
+                        if parts[2] in commands:
+                            args = parts[3:]
+
+                            variables[parts[1]] = commands[parts[2]](*args)
+                        else:
+                            raw_val = line.split(maxsplit=2)[2]
+                            is_str = (raw_val.startswith('"') and raw_val.endswith('"')) or (raw_val.startswith("'") and raw_val.endswith("'"))
+
+                            variables[parts[1]] = tokenise(parts[2], is_string=is_str)
+                    else:
+                        raise SyntaxError("var requires 2 arguments")
+
+                elif parts[0] == "input":
+                    if len(parts) == 2:
+                        variables[parts[1]] = input()
+                    elif len(parts) == 3:
+                        variables[parts[2]] = input(parts[1])
+                    else:
+                            raise SyntaxError("input requires 1 or 2 arguments")
+
+                elif parts[0] == "wait":
+                    if len(parts) >= 2:
+                        if parts[1] in commands:
                             args = parts[2:]
 
-                            print(commands[parts[1]](*args))
+                            time.sleep(commands[parts[1]](*args))
                         else:
-                            raise NameError(f"Name '{dump_split[1]}' not defined")
-                else:
-                    raise SyntaxError("println requires 1 value")
-
-            elif parts[0] == "var":
-                if len(parts) >= 3:
-                    if parts[2] in commands:
-                        args = parts[3:]
-
-                        variables[parts[1]] = commands[parts[2]](*args)
+                            if dump_split[1] in variables:
+                                time.sleep(variables[dump_split[1]])
+                            else:
+                                try:
+                                    time.sleep(float(parts[1]))
+                                except (ValueError):
+                                    if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                                        raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
+                                    else:
+                                        raise ValueError(f"Variable '{parts[1]}' is not defined")
                     else:
-                        raw_val = line.split(maxsplit=2)[2]
-                        is_str = (raw_val.startswith('"') and raw_val.endswith('"')) or (raw_val.startswith("'") and raw_val.endswith("'"))
+                        raise SyntaxError("wait requires 1 argument")
 
-                        variables[parts[1]] = tokenise(parts[2], is_string=is_str)
-                else:
-                    raise SyntaxError("var requires 2 arguments")
+                elif parts[0] == "if":
+                    if not False in skip:
+                        match = re.match(r"if\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
+                        if match:
+                            raw_left = match.group(1).strip()
+                            op = match.group(2)
+                            raw_right = match.group(3).strip()
 
-            elif parts[0] == "input":
-                if len(parts) == 2:
-                    variables[parts[1]] = input()
-                elif len(parts) == 3:
-                    variables[parts[2]] = input(parts[1])
-                else:
-                        raise SyntaxError("input requires 1 or 2 arguments")
+                            left_clean = shlex.split(raw_left)[0]
+                            right_clean = shlex.split(raw_right)[0]
 
-            elif parts[0] == "wait":
-                if len(parts) >= 2:
-                    if parts[1] in commands:
-                        args = parts[2:]
+                            left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
+                            right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
 
-                        time.sleep(commands[parts[1]](*args))
-                    else:
-                        if dump_split[1] in variables:
-                            time.sleep(variables[dump_split[1]])
+                            left = tokenise(left_clean, is_string=left_is_str)
+                            right = tokenise(right_clean, is_string=right_is_str)
+
+                            cond = compare(left, right, op)
+
+                            if len(skip) > 0 and skip[-1] == False:
+                                skip.append(False)
+                            else:
+                                skip.append(cond)
                         else:
-                            try:
-                                time.sleep(float(parts[1]))
-                            except (ValueError):
-                                if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
-                                    raise ValueError(f"wait cannot use arguments like '{parts[1]}'")
-                                else:
-                                    raise ValueError(f"Variable '{parts[1]}' is not defined")
-                else:
-                    raise SyntaxError("wait requires 1 argument")
+                            raise SyntaxError("if requires 3 arguments")
 
-            elif parts[0] == "if":
-                if not False in skip:
-                    match = re.match(r"if\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
-                    if match:
-                        raw_left = match.group(1).strip()
-                        op = match.group(2)
-                        raw_right = match.group(3).strip()
-
-                        left_clean = shlex.split(raw_left)[0]
-                        right_clean = shlex.split(raw_right)[0]
-
-                        left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
-                        right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
-
-                        left = tokenise(left_clean, is_string=left_is_str)
-                        right = tokenise(right_clean, is_string=right_is_str)
-
-                        cond = compare(left, right, op)
-
-                        if len(skip) > 0 and skip[-1] == False:
-                            skip.append(False)
+                elif parts[0] == "else":
+                    if len(skip) >= 2:
+                        if skip[-2]:
+                            if len(parts) == 1:
+                                skip[-1] = not skip[-1]
+                            else:
+                                raise SyntaxError("Well, else dont require arguments")
                         else:
-                            skip.append(cond)
+                            pass
                     else:
-                        raise SyntaxError("if requires 3 arguments")
-
-            elif parts[0] == "else":
-                if len(skip) >= 2:
-                    if skip[-2]:
                         if len(parts) == 1:
                             skip[-1] = not skip[-1]
                         else:
                             raise SyntaxError("Well, else dont require arguments")
-                    else:
-                        pass
-                else:
-                    if len(parts) == 1:
-                        skip[-1] = not skip[-1]
-                    else:
-                        raise SyntaxError("Well, else dont require arguments")
 
-            elif parts[0] == "endif":
-                if skip:
-                    skip.pop()
+                elif parts[0] == "endif":
+                    if skip:
+                        skip.pop()
 
-            elif parts[0] == "while":
-                global ind
-                if not False in skip:
-                    match = re.match(r"while\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
-                    if match:
-                        raw_left = match.group(1).strip()
-                        op = match.group(2)
-                        raw_right = match.group(3).strip()
+                elif parts[0] == "while":
+                    global ind
+                    if not False in skip:
+                        match = re.match(r"while\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
+                        if match:
+                            raw_left = match.group(1).strip()
+                            op = match.group(2)
+                            raw_right = match.group(3).strip()
 
-                        left_clean = shlex.split(raw_left)[0]
-                        right_clean = shlex.split(raw_right)[0]
+                            left_clean = shlex.split(raw_left)[0]
+                            right_clean = shlex.split(raw_right)[0]
 
-                        left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
-                        right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
+                            left_is_str = (raw_left.startswith('"') and raw_left.endswith('"')) or (raw_left.startswith("'") and raw_left.endswith("'"))
+                            right_is_str = (raw_right.startswith('"') and raw_right.endswith('"')) or (raw_right.startswith("'") and raw_right.endswith("'"))
 
-                        startpos = ind
-                        left = tokenise(left_clean, is_string=left_is_str)
-                        right = tokenise(right_clean, is_string=right_is_str)
+                            startpos = ind
+                            left = tokenise(left_clean, is_string=left_is_str)
+                            right = tokenise(right_clean, is_string=right_is_str)
 
-                        cond = compare(left, right, op)
+                            cond = compare(left, right, op)
 
-                        if cond:
-                            ind += 1
+                            if cond:
+                                ind += 1
+                            else:
+                                nesting = 1
+                                skip_idx = ind + 1
+                                while skip_idx < len(code):
+                                    p_skip = shlex.split(code[skip_idx]) if code[skip_idx] else []
+                                    if p_skip:
+                                        if p_skip[0] == "while":
+                                            nesting += 1
+                                        elif p_skip[0] == "endwhl":
+                                            nesting -= 1
+                                            if nesting == 0:
+                                                break
+                                    skip_idx += 1
+                                ind = skip_idx + 1
                         else:
-                            nesting = 1
-                            skip_idx = ind + 1
-                            while skip_idx < len(code):
-                                p_skip = shlex.split(code[skip_idx]) if code[skip_idx] else []
-                                if p_skip:
-                                    if p_skip[0] == "while":
-                                        nesting += 1
-                                    elif p_skip[0] == "endwhl":
-                                        nesting -= 1
-                                        if nesting == 0:
-                                            break
-                                skip_idx += 1
-                            ind = skip_idx + 1
-                    else:
-                        raise SyntaxError("while requires 3 arguments")
+                            raise SyntaxError("while requires 3 arguments")
 
-            elif parts[0] == "endwhl":
-                if skip:
-                    skip.pop()
-                nesting = 1
-                back_idx = ind - 1
-                while back_idx >= 0:
-                    p_back = shlex.split(code[back_idx]) if code[back_idx] else []
-                    if p_back:
-                        if p_back[0] == "endwhl":
-                            nesting += 1
-                        elif p_back[0] == "while":
-                            nesting -= 1
-                            if nesting == 0:
-                                ind = back_idx
-                                break
-                    back_idx -= 1
+                elif parts[0] == "endwhl":
+                    if skip:
+                        skip.pop()
+                    nesting = 1
+                    back_idx = ind - 1
+                    while back_idx >= 0:
+                        p_back = shlex.split(code[back_idx]) if code[back_idx] else []
+                        if p_back:
+                            if p_back[0] == "endwhl":
+                                nesting += 1
+                            elif p_back[0] == "while":
+                                nesting -= 1
+                                if nesting == 0:
+                                    ind = back_idx
+                                    break
+                        back_idx -= 1
 
-            elif parts[0] == "break":
-                if len(parts) == 2:
-                    index = ind
-                    while_count = 0
-
-                    if dump_split[1] != "all":
-                        if dump_split[1] not in variables:
-                            for i in range(int(parts[1])):
-                                while code[index] != "endwhl":
-                                    index += 1
-                                index += 1
-                        else:
-                            for i in range(variables[parts[1]]):
-                                while code[index] != "endwhl":
-                                    index += 1
-                                index += 1
-                    else:
-                        back_index = ind
-                        while_count = 0
-                        while back_index > 0:
-                            back_index -= 1
-                            line = code[back_index].strip()
-                            if line:
-                                parts_back = line.split()
-                                if parts_back and parts_back[0] == "while":
-                                    while_count += 1
-
+                elif parts[0] == "break":
+                    if len(parts) == 2:
                         index = ind
-                        for i in range(while_count):
-                            while index < len(code) and code[index] != "endwhl":
-                                index += 1
-                            if index < len(code):
-                                index += 1
+                        while_count = 0
 
-                    ind = index
-                else:
-                    raise SyntaxError("break requires 1 argument")
-
-            elif parts[0] == "open":
-                if len(parts) >= 3:
-                    try:
-                        if dump_split[1:dump_split.index(parts[2])][0][0] == '"' and dump_split[1:dump_split.index(parts[2])][-1][-1] == '"':
-                            with open(parts[1], 'r', encoding='utf-8') as f:
-                                data = f.read()
-                            variables[parts[2]] = data
+                        if dump_split[1] != "all":
+                            if dump_split[1] not in variables:
+                                for i in range(int(parts[1])):
+                                    while code[index] != "endwhl":
+                                        index += 1
+                                    index += 1
+                            else:
+                                for i in range(variables[parts[1]]):
+                                    while code[index] != "endwhl":
+                                        index += 1
+                                    index += 1
                         else:
-                            if parts[1] in variables:
-                                with open(variables[parts[1]], 'r', encoding='utf-8') as f:
+                            # 1. Отматываем назад и считаем, сколько while над нами
+                            back_index = ind
+                            while_count = 0
+                            while back_index > 0:
+                                back_index -= 1
+                                line = code[back_index].strip()
+                                if line:
+                                    parts_back = line.split()
+                                    if parts_back and parts_back[0] == "while":
+                                        while_count += 1
+                            
+                            # 2. Возвращаемся к текущему break и шагаем вперед на while_count закрывающих endwhl
+                            index = ind
+                            for i in range(while_count):
+                                while index < len(code) and code[index] != "endwhl":
+                                    index += 1
+                                if index < len(code):
+                                    index += 1  # перешагиваем сам endwhl
+
+                        ind = index
+                    else:
+                        raise SyntaxError("break requires 1 argument")
+
+                elif parts[0] == "open":
+                    if len(parts) >= 3:
+                        try:
+                            if dump_split[1:dump_split.index(parts[2])][0][0] == '"' and dump_split[1:dump_split.index(parts[2])][-1][-1] == '"':
+                                with open(parts[1], 'r', encoding='utf-8') as f:
                                     data = f.read()
                                 variables[parts[2]] = data
                             else:
-                                raise NameError(f"Name '{parts[1]}' not defined")
+                                if parts[1] in variables:
+                                    with open(variables[parts[1]], 'r', encoding='utf-8') as f:
+                                        data = f.read()
+                                    variables[parts[2]] = data
+                                else:
+                                    raise NameError(f"Name '{parts[1]}' not defined")
 
-                    except (FileNotFoundError):
-                        raise FileNotFoundError(f"File {parts[1]} not found")
-                else:
-                    raise SyntaxError("open requires 2 arguments")
+                        except (FileNotFoundError):
+                            raise FileNotFoundError(f"File {parts[1]} not found")
+                    else:
+                        raise SyntaxError("open requires 2 arguments")
 
-            elif parts[0] == "write":
-                if len(parts) == 3:
-                    with open(parts[1], 'w', encoding='utf-8') as f:
-                        if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
-                            f.write(parts[2])
-                        else:
-                            if parts[2] in variables:
-                                f.write(variables[parts[2]])
-                            else:
-                                raise NameError(f"Name '{parts[2]}' not defined")
-                else:
-                    raise SyntaxError("write requires 2 arguments")
-
-            elif parts[0] == "add":
-                if len(parts) >= 3:
-                    try:
-                        with open(parts[1], 'a', encoding='utf-8') as f:
+                elif parts[0] == "write":
+                    if len(parts) == 3:
+                        with open(parts[1], 'w', encoding='utf-8') as f:
                             if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
                                 f.write(parts[2])
                             else:
@@ -419,340 +409,365 @@ def lang(line):
                                     f.write(variables[parts[2]])
                                 else:
                                     raise NameError(f"Name '{parts[2]}' not defined")
-
-                    except (FileNotFoundError):
-                        raise FileNotFoundError(f"File {parts[1]} not found")
-                else:
-                    raise SyntaxError("add requires 2 arguments")
-
-            elif parts[0] == "create":
-                try:
-                    if parts[1] == "file":
-                        if len(parts) == 4:
-                            with open(parts[2], 'x', encoding='utf-8') as f:
-                                if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
-                                    f.write(parts[3])
-                                else:
-                                    if parts[3] in variables:
-                                        f.write(variables[parts[3]])
-                                    else:
-                                        raise NameError(f"Name '{parts[3]}' not defined")
-                        else:
-                            raise SyntaxError("create requires 3 arguments for files")
-                    elif parts[1] == "dir":
-                        if len(parts) == 3:
-                            if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
-                                os.mkdir(parts[2])
-                            else:
-                                if parts[2] in variables:
-                                    os.mkdir(variables[parts[2]])
-                                else:
-                                    raise NameError(f"Name '{parts[2]}' not defined")
-                        else:
-                            raise SyntaxError("create requires 2 arguments for dirs")
-
-                except (FileExistsError):
-                    raise FileExistsError(f"File {parts[1]} already exist")
-
-            elif parts[0] == "remove":
-                if len(parts) == 2:
-                    if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
-                        if os.path.isfile(parts[1]):
-                            try:
-                                os.remove(parts[1])
-                            except (FileNotFoundError):
-                                raise FileNotFoundError(f"File {parts[1]} not found")
-                            except (PermissionError):
-                                raise PermissionError(f"Script has no permission for {parts[1]}")
-                        elif os.path.isdir(parts[1]):
-                            shutil.rmtree(parts[1])
                     else:
-                        if parts[1] in variables:
-                            if os.path.isfile(variables[parts[1]]):
+                        raise SyntaxError("write requires 2 arguments")
+
+                elif parts[0] == "add":
+                    if len(parts) >= 3:
+                        try:
+                            with open(parts[1], 'a', encoding='utf-8') as f:
+                                if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                                    f.write(parts[2])
+                                else:
+                                    if parts[2] in variables:
+                                        f.write(variables[parts[2]])
+                                    else:
+                                        raise NameError(f"Name '{parts[2]}' not defined")
+
+                        except (FileNotFoundError):
+                            raise FileNotFoundError(f"File {parts[1]} not found")
+                    else:
+                        raise SyntaxError("add requires 2 arguments")
+
+                elif parts[0] == "create":
+                    try:
+                        if parts[1] == "file":
+                            if len(parts) == 4:
+                                with open(parts[2], 'x', encoding='utf-8') as f:
+                                    if dump_split[3:][0][0] == '"' and dump_split[3:][-1][-1] == '"':
+                                        f.write(parts[3])
+                                    else:
+                                        if parts[3] in variables:
+                                            f.write(variables[parts[3]])
+                                        else:
+                                            raise NameError(f"Name '{parts[3]}' not defined")
+                            else:
+                                raise SyntaxError("create requires 3 arguments for files")
+                        elif parts[1] == "dir":
+                            if len(parts) == 3:
+                                if dump_split[2:][0][0] == '"' and dump_split[2:][-1][-1] == '"':
+                                    os.mkdir(parts[2])
+                                else:
+                                    if parts[2] in variables:
+                                        os.mkdir(variables[parts[2]])
+                                    else:
+                                        raise NameError(f"Name '{parts[2]}' not defined")
+                            else:
+                                raise SyntaxError("create requires 2 arguments for dirs")
+
+                    except (FileExistsError):
+                        raise FileExistsError(f"File {parts[1]} already exist")
+
+                elif parts[0] == "remove":
+                    if len(parts) == 2:
+                        if dump_split[1:][0][0] == '"' and dump_split[1:][-1][-1] == '"':
+                            if os.path.isfile(parts[1]):
                                 try:
-                                    os.remove(variables[parts[1]])
+                                    os.remove(parts[1])
                                 except (FileNotFoundError):
                                     raise FileNotFoundError(f"File {parts[1]} not found")
                                 except (PermissionError):
                                     raise PermissionError(f"Script has no permission for {parts[1]}")
-                            elif os.path.isdir(variables[parts[1]]):
-                                shutil.rmtree(variables[parts[1]])
+                            elif os.path.isdir(parts[1]):
+                                shutil.rmtree(parts[1])
                         else:
-                            raise NameError(f"Name '{parts[1]}' not defined")
-                else:
-                    raise SyntaxError("remove requires 1 argument")
-
-            elif parts[0] == "reboot":
-                if not skip or skip[-1]:
-                    try:
-                        if len(parts) == 2:
-                            if dump_split[1] in variables:
-                                os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && reboot &")
+                            if parts[1] in variables:
+                                if os.path.isfile(variables[parts[1]]):
+                                    try:
+                                        os.remove(variables[parts[1]])
+                                    except (FileNotFoundError):
+                                        raise FileNotFoundError(f"File {parts[1]} not found")
+                                    except (PermissionError):
+                                        raise PermissionError(f"Script has no permission for {parts[1]}")
+                                elif os.path.isdir(variables[parts[1]]):
+                                    shutil.rmtree(variables[parts[1]])
                             else:
-                                os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && reboot &")
-                        else:
-                            raise SyntaxError("reboot requires 1 argument")
-                    except (ValueError):
-                        if parts[1] in variables:
-                            raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
-                        else:
-                            raise ValueError(f"Argument '{parts[1]}' cannot be integer")
-
-            elif parts[0] == "root":
-                if not skip or skip[-1]:
-                    if len(parts) == 3:
-                        if parts[1] == "file":
-                            if dump_split[2] in variables:
-                                if os.path.isfile(variables[parts[2]]):
-                                    if os.name == 'nt':
-                                        commands = [
-                                            f'takeown /f "{variables[parts[2]]}"',
-                                            f'icacls "{variables[parts[2]]}" /grant %username%:F',
-                                            f'icacls "{variables[parts[2]]}" /grant Administrators:F'
-                                        ]
-                    
-                                        for cmd in commands:
-                                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-                    
-                                            if root.returncode != 0:
-                                                raise RuntimeError(f"root returned {root.returncode}")
-                                    else:
-                                        code = os.system(f"sudo chown $USER '{variables[parts[2]]}' && sudo chmod u+rwx '{variables[parts[2]]}'")
-                                        if code != 0:
-                                            raise RuntimeError("Cannot get access")
-                                else:
-                                    raise FileNotFoundError(f"File '{variables[parts[2]]}' not found")
-                            else:
-                                if os.path.isfile(parts[2]):
-                                    if os.name == 'nt':
-                                        commands = [
-                                            f'takeown /f "{parts[2]}"',
-                                            f'icacls "{parts[2]}" /grant %username%:F',
-                                            f'icacls "{parts[2]}" /grant Administrators:F'
-                                        ]
-    
-                                        for cmd in commands:
-                                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    
-                                            if root.returncode != 0:
-                                                raise RuntimeError(f"root returned {root.returncode}")
-                                    else:
-                                        code = os.system(f"sudo chown $USER '{parts[2]}' && sudo chmod u+rwx '{parts[2]}'")
-                                        if code != 0:
-                                            raise RuntimeError("Cannot get access")
-                                else:
-                                    raise FileNotFoundError(f"File '{parts[2]}' not found")
-    
-                        elif parts[1] == "dir":
-                            if dump_split[2] in variables:
-                                if os.path.isdir(variables[parts[2]]):
-                                    if os.name == 'nt':
-                                        commands = [
-                                            f'takeown /f "{variables[parts[2]]}" /r /d y',
-                                            f'icacls "{variables[parts[2]]}" /grant %username%:F /t',
-                                            f'icacls "{variables[parts[2]]}" /grant Administrators:F /t'
-                                        ]
-                    
-                                        for cmd in commands:
-                                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-                    
-                                            if root.returncode != 0:
-                                                raise RuntimeError(f"root returned {root.returncode}")
-                                    else:
-                                        code = os.system(f"sudo chown -R $USER '{variables[parts[2]]}' && sudo chmod -R u+rwx '{variables[parts[2]]}'")
-                                        if code != 0:
-                                            raise RuntimeError("root command failed on Linux")
-                                else:
-                                    raise FileNotFoundError(f"Dir '{variables[parts[2]]}' not found")
-                            else:
-                                if os.path.isdir(parts[2]):
-                                    if os.name == 'nt':
-                                        commands = [
-                                            f'takeown /f "{parts[2]}" /r /d y',
-                                            f'icacls "{parts[2]}" /grant %username%:F /t',
-                                            f'icacls "{parts[2]}" /grant Administrators:F /t'
-                                        ]
-    
-                                        for cmd in commands:
-                                            root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    
-                                            if root.returncode != 0:
-                                                raise RuntimeError(f"root returned {root.returncode}")
-                                    else:
-                                        code = os.system(f"sudo chown -R $USER '{parts[2]}' && sudo chmod -R u+rwx '{parts[2]}'")
-                                        if code != 0:
-                                            raise RuntimeError("root command failed on Linux")
-                                else:
-                                    raise FileNotFoundError(f"Dir '{parts[2]}' not found")
-    
-                        else:
-                            raise IndexError(f"Argument '{parts[1]}' is not defined")
+                                raise NameError(f"Name '{parts[1]}' not defined")
                     else:
-                        raise SyntaxError("root requires 2 arguments")
-    
-            elif parts[0] == "AutoReg":
-                if not skip or skip[-1]:
-                    if len(parts) == 3:
-                        app_name = parts[2]
+                        raise SyntaxError("remove requires 1 argument")
+
+                elif parts[0] == "python":
+                    if len(parts) == 1:
+                        pycode.append(True)
+                    else:
+                        raise SyntaxError("python requires no arguments")
+
+                elif parts[0] == "reboot":
+                    if not skip or skip[-1]:
+                        try:
+                            if len(parts) == 2:
+                                if dump_split[1] in variables:
+                                    os.system(f"shutdown /r /t {int(variables[parts[1]])}" if os.name == 'nt' else f"sleep {int(variables[parts[1]])} && reboot &")
+                                else:
+                                    os.system(f"shutdown /r /t {int(parts[1])}" if os.name == 'nt' else f"sleep {int(parts[1])} && reboot &")
+                            else:
+                                raise SyntaxError("reboot requires 1 argument")
+                        except (ValueError):
+                            if parts[1] in variables:
+                                raise ValueError(f"Argument '{variables[parts[1]]}' cannot be integer")
+                            else:
+                                raise ValueError(f"Argument '{parts[1]}' cannot be integer")
+
+                elif parts[0] == "root":
+                    if not skip or skip[-1]:
+                        if len(parts) == 3:
+                            if parts[1] == "file":
+                                if dump_split[2] in variables:
+                                    if os.path.isfile(variables[parts[2]]):
+                                        if os.name == 'nt':
+                                            commands = [
+                                                f'takeown /f "{variables[parts[2]]}"',
+                                                f'icacls "{variables[parts[2]]}" /grant %username%:F',
+                                                f'icacls "{variables[parts[2]]}" /grant Administrators:F'
+                                            ]
                         
-                        if os.name == 'nt':
-                            if parts[1] == "self":
-                                script_path = sys.argv[1]
+                                            for cmd in commands:
+                                                root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                        
+                                                if root.returncode != 0:
+                                                    raise RuntimeError(f"root returned {root.returncode}")
+                                        else:
+                                            code = os.system(f"sudo chown $USER '{variables[parts[2]]}' && sudo chmod u+rwx '{variables[parts[2]]}'")
+                                            if code != 0:
+                                                raise RuntimeError("Cannot get access")
+                                    else:
+                                        raise FileNotFoundError(f"File '{variables[parts[2]]}' not found")
+                                else:
+                                    if os.path.isfile(parts[2]):
+                                        if os.name == 'nt':
+                                            commands = [
+                                                f'takeown /f "{parts[2]}"',
+                                                f'icacls "{parts[2]}" /grant %username%:F',
+                                                f'icacls "{parts[2]}" /grant Administrators:F'
+                                            ]
+        
+                                            for cmd in commands:
+                                                root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+                                                if root.returncode != 0:
+                                                    raise RuntimeError(f"root returned {root.returncode}")
+                                        else:
+                                            code = os.system(f"sudo chown $USER '{parts[2]}' && sudo chmod u+rwx '{parts[2]}'")
+                                            if code != 0:
+                                                raise RuntimeError("Cannot get access")
+                                    else:
+                                        raise FileNotFoundError(f"File '{parts[2]}' not found")
+        
+                            elif parts[1] == "dir":
+                                if dump_split[2] in variables:
+                                    if os.path.isdir(variables[parts[2]]):
+                                        if os.name == 'nt':
+                                            commands = [
+                                                f'takeown /f "{variables[parts[2]]}" /r /d y',
+                                                f'icacls "{variables[parts[2]]}" /grant %username%:F /t',
+                                                f'icacls "{variables[parts[2]]}" /grant Administrators:F /t'
+                                            ]
+                        
+                                            for cmd in commands:
+                                                root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                        
+                                                if root.returncode != 0:
+                                                    raise RuntimeError(f"root returned {root.returncode}")
+                                        else:
+                                            code = os.system(f"sudo chown -R $USER '{variables[parts[2]]}' && sudo chmod -R u+rwx '{variables[parts[2]]}'")
+                                            if code != 0:
+                                                raise RuntimeError("root command failed on Linux")
+                                    else:
+                                        raise FileNotFoundError(f"Dir '{variables[parts[2]]}' not found")
+                                else:
+                                    if os.path.isdir(parts[2]):
+                                        if os.name == 'nt':
+                                            commands = [
+                                                f'takeown /f "{parts[2]}" /r /d y',
+                                                f'icacls "{parts[2]}" /grant %username%:F /t',
+                                                f'icacls "{parts[2]}" /grant Administrators:F /t'
+                                            ]
+        
+                                            for cmd in commands:
+                                                root = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+                                                if root.returncode != 0:
+                                                    raise RuntimeError(f"root returned {root.returncode}")
+                                        else:
+                                            code = os.system(f"sudo chown -R $USER '{parts[2]}' && sudo chmod -R u+rwx '{parts[2]}'")
+                                            if code != 0:
+                                                raise RuntimeError("root command failed on Linux")
+                                    else:
+                                        raise FileNotFoundError(f"Dir '{parts[2]}' not found")
+        
                             else:
-                                script_path = parts[1]
-    
-                            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-    
-                            try:
-                                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
-                                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, script_path)
-                                winreg.CloseKey(key)
-    
-                            except FileNotFoundError:
-                                raise FileNotFoundError(f"Path '{script_path}' not found")
+                                raise IndexError(f"Argument '{parts[1]}' is not defined")
                         else:
-                            autostart = os.path.expanduser("~/.config/autostart")
-                            os.makedirs(autostart, exist_ok=True)
-    
-                            if parts[1] == "self":
-                                script_path = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.abspath(__file__)
-                            else:
-                                script_path = os.path.abspath(parts[1])
-    
-                            desktop_data = f'''[Desktop Entry]
-                                            Type=Application
-                                            Name={app_name}
-                                            Exec="{script_path}"
-                                            X-GNOME-Autostart-enabled=true
-                                            '''
-                            desktop_file_path = os.path.join(autostart, f"{app_name}.desktop")
-                            try:
-                                with open(desktop_file_path, "w", encoding="utf-8") as f:
-                                    f.write(desktop_data)
-                                os.chmod(desktop_file_path, 0o755)
-                            except Exception as e:
-                                raise RuntimeError(f"Failed to create autostart entry: {e}")
-                    else:
-                        raise SyntaxError("AutoReg requires 2 arguments")
-    
-            elif parts[0] == "run":
-                if not skip or skip[-1]:
-                    if len(parts) == 2:
-                        target = variables[parts[1]] if dump_split[1] in variables else parts[1]
-                        try:
+                            raise SyntaxError("root requires 2 arguments")
+        
+                elif parts[0] == "AutoReg":
+                    if not skip or skip[-1]:
+                        if len(parts) == 3:
+                            app_name = parts[2]
+                            
                             if os.name == 'nt':
-                                os.startfile(target)
+                                if parts[1] == "self":
+                                    script_path = sys.argv[1]
+                                else:
+                                    script_path = parts[1]
+        
+                                key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        
+                                try:
+                                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                                    winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, script_path)
+                                    winreg.CloseKey(key)
+        
+                                except FileNotFoundError:
+                                    raise FileNotFoundError(f"Path '{script_path}' not found")
                             else:
-                                os.system(f"xdg-open '{target}'")
-                        except Exception:
-                            raise FileNotFoundError(f"File '{target}' not found or cannot be opened")
+                                autostart = os.path.expanduser("~/.config/autostart")
+                                os.makedirs(autostart, exist_ok=True)
+        
+                                if parts[1] == "self":
+                                    script_path = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.abspath(__file__)
+                                else:
+                                    script_path = os.path.abspath(parts[1])
+        
+                                desktop_data = f'''[Desktop Entry]
+                                                Type=Application
+                                                Name={app_name}
+                                                Exec="{script_path}"
+                                                X-GNOME-Autostart-enabled=true
+                                                '''
+                                desktop_file_path = os.path.join(autostart, f"{app_name}.desktop")
+                                try:
+                                    with open(desktop_file_path, "w", encoding="utf-8") as f:
+                                        f.write(desktop_data)
+                                    os.chmod(desktop_file_path, 0o755)
+                                except Exception as e:
+                                    raise RuntimeError(f"Failed to create autostart entry: {e}")
+                        else:
+                            raise SyntaxError("AutoReg requires 2 arguments")
+        
+                elif parts[0] == "run":
+                    if not skip or skip[-1]:
+                        if len(parts) == 2:
+                            target = variables[parts[1]] if dump_split[1] in variables else parts[1]
+                            try:
+                                if os.name == 'nt':
+                                    os.startfile(target)
+                                else:
+                                    os.system(f"xdg-open '{target}'")
+                            except Exception:
+                                raise FileNotFoundError(f"File '{target}' not found or cannot be opened")
+                        else:
+                            raise SyntaxError("run requires 1 argument")
+
+                elif parts[0] == "pass":
+                    if len(parts) == 1:
+                        pass
                     else:
-                        raise SyntaxError("run requires 1 argument")
-
-            elif parts[0] == "pass":
-                if len(parts) == 1:
-                    pass
-                else:
-                    raise SyntaxError("Are you serious right now?")
-            
-            elif parts[0] == "error":
-                if len(parts) == 3:
-                    try:
-                        raise errors[dump_split[1]](parts[2])
-                    except (KeyError):
-                        raise KeyError(f"Undefined error '{parts[1]}'")
-                else:
-                    raise SyntaxError("error requires 2 arguments")
-
-            elif parts[0] == "import":
-                if len(parts) == 2:
-                    if parts[1].endswith(".fssc"):
-                        try:
-                            run_file(parts[1])
-                        except FileNotFoundError:
-                            raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
-                    elif parts[1].endswith(".py"):
-                        try:
-                            with open(parts[1], "r", encoding="utf-8") as f:
-                                exec(f.read(), globals())
-                        except FileNotFoundError:
-                            raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                        raise SyntaxError("Are you serious right now?")
                 
-                else:
-                    raise SyntaxError("import requires 1 argument")
+                elif parts[0] == "error":
+                    if len(parts) == 3:
+                        try:
+                            raise errors[dump_split[1]](parts[2])
+                        except (KeyError):
+                            raise KeyError(f"Undefined error '{parts[1]}'")
+                    else:
+                        raise SyntaxError("error requires 2 arguments")
 
-            elif parts[0] == "fnc":
-                if len(parts) >= 2:
-                    global fnc_name
-                    fncreate.append(True)
-                    fnc_name = parts[1]
-                    fnc_args = parts[2:]
-                    fncs[fnc_name] = []
+                elif parts[0] == "import":
+                    if len(parts) == 2:
+                        if parts[1].endswith(".fssc"):
+                            try:
+                                run_file(parts[1])
+                            except FileNotFoundError:
+                                raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                        elif parts[1].endswith(".py"):
+                            try:
+                                with open(parts[1], "r", encoding="utf-8") as f:
+                                    exec(f.read(), globals())
+                            except FileNotFoundError:
+                                raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+                    
+                    else:
+                        raise SyntaxError("import requires 1 argument")
 
-                    for line in fnc_args:
-                        if line != "endfnc":
-                            fncs[fnc_name].append(line)
-                        else:
-                            break
+                elif parts[0] == "fnc":
+                    if len(parts) >= 2:
+                        global fnc_name
+                        fncreate.append(True)
+                        fnc_name = parts[1]
+                        fnc_args = parts[2:]
+                        fncs[fnc_name] = []
 
-            elif parts[0] == "always":
-                if len(parts) == 2:
-                    always.append(parts[1])
-                else:
-                    raise SyntaxError("always requires 1 argument")
-            
-            elif parts[0] == "enough":
-                if len(parts) == 2:
-                    if len(always) > 0:
-                        if parts[1] in always:
-                            if parts[1] in cmdlist or parts[1] in fncreate:
-                                always.remove(parts[1])
+                        for line in fnc_args:
+                            if line != "endfnc":
+                                fncs[fnc_name].append(line)
                             else:
-                                raise NameError(f"Function '{parts[1]}' doesn't exist")
+                                break
+
+                elif parts[0] == "always":
+                    if len(parts) == 2:
+                        always.append(parts[1])
+                    else:
+                        raise SyntaxError("always requires 1 argument")
+                
+                elif parts[0] == "enough":
+                    if len(parts) == 2:
+                        if len(always) > 0:
+                            if parts[1] in always:
+                                if parts[1] in cmdlist or parts[1] in fncreate:
+                                    always.remove(parts[1])
+                                else:
+                                    raise NameError(f"Function '{parts[1]}' doesn't exist")
+                            else:
+                                raise ValueError(f"Function '{parts[1]}' didn't declared with 'always'")
                         else:
-                            raise ValueError(f"Function '{parts[1]}' didn't declared with 'always'")
+                            raise ValueError(f"'always' stack is empty")
                     else:
-                        raise ValueError(f"'always' stack is empty")
-                else:
-                    raise SyntaxError("enough requires 1 argument")
+                        raise SyntaxError("enough requires 1 argument")
 
-            elif parts[0] == "OpenLink":
-                if len(parts) == 2:
-                    if dump_split[1] in variables:
-                        webbrowser.open(variables[parts[1]])
-                    else:
-                        if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
-                            webbrowser.open(parts[1])
+                elif parts[0] == "OpenLink":
+                    if len(parts) == 2:
+                        if dump_split[1] in variables:
+                            webbrowser.open(variables[parts[1]])
                         else:
-                            raise ValueError(f"OpenLink cannot use value like '{parts[1]}'")
-                else:
-                    raise SyntaxError("OpenLink requires 1 argument")
-
-            elif parts[0] == "exec":
-                if len(parts) >= 2:
-                    if dump_split[1] in variables:
-                        lang(variables[parts[1]])
+                            if (dump_split[1][0][0] == '"' and dump_split[-1][-1][-1] == '"') or (dump_split[1][0][0] == "'" and dump_split[-1][-1][-1] == "'"):
+                                webbrowser.open(parts[1])
+                            else:
+                                raise ValueError(f"OpenLink cannot use value like '{parts[1]}'")
                     else:
-                        lang(parts[1])
-                else:
-                    raise SyntaxError("exec requires 1 line of code")
+                        raise SyntaxError("OpenLink requires 1 argument")
 
-            else:
-                if parts[0] in fncs:
-                    args = parts[1:]
-                    arg_names = fncs[parts[0]]["args"]
-                    for i, arg in enumerate(args):
-                        variables[arg_names[i]] = tokenise(arg)
+                elif parts[0] == "exec":
+                    if len(parts) >= 2:
+                        if dump_split[1] in variables:
+                            lang(variables[parts[1]])
+                        else:
+                            lang(parts[1])
+                    else:
+                        raise SyntaxError("exec requires 1 line of code")
 
-                    for cmd in fncs[parts[0]]:
-                        lang(cmd)
                 else:
-                    raise NameError(f"Unknown command '{parts[0]}'")
-    else:
-        if parts[0] == "endfnc":
-            fncreate.append(False)
+                    if parts[0] in fncs:
+                        args = parts[1:]
+                        arg_names = fncs[parts[0]]["args"]
+                        for i, arg in enumerate(args):
+                            variables[arg_names[i]] = tokenise(arg)
+
+                        for cmd in fncs[parts[0]]:
+                            lang(cmd)
+                    else:
+                        raise NameError(f"Unknown command '{parts[0]}'")
         else:
-            fncs[fnc_name].append(line)
+            if parts[0] == "endfnc":
+                fncreate.append(False)
+            else:
+                fncs[fnc_name].append(line)
+    else:
+        if parts[0] == "endpy":
+            pycode.append(False)
+        else:
+            exec(line.strip())
 
 def run_file(filename):
     global code, ind
