@@ -4,6 +4,17 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
+*In new update FileScript can run real python code with block* ```python...endpy```
+
+*Example:*
+
+```go
+python
+	print("Its python code in FileScript")
+	input("Type your text: ")
+endpy
+```
+
 *FileScript instruction* ```input``` *now updated and can output text before input*
 
 ```go
