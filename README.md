@@ -10,8 +10,8 @@
 
 ```go
 python
-	print("Its python code in FileScript")
-	input("Type your text: ")
+    print("Its python code in FileScript")
+    input("Type your text: ")
 endpy
 ```
 
