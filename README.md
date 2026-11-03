@@ -18,7 +18,7 @@ python
     global num = 10
 endpy
 
-println  num
+println num
 ```
 
 *FileScript instruction* ```input``` *now updated and can output text before input*
