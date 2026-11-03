@@ -648,7 +648,6 @@ def lang(line):
                                     exec(f.read(), globals())
                             except FileNotFoundError:
                                 raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
-                    
                     else:
                         raise SyntaxError("import requires 1 argument")
 
@@ -731,7 +730,14 @@ def lang(line):
         if parts[0] == "endpy":
             pycode.append(False)
         else:
-            exec(line.strip())
+            if parts[0] == "global":
+                line = line.split()
+                line = str(line[1:])
+                exec(line.strip())
+
+                variables[parts[1]] = tokenise(parts[3])
+            else:
+                exec(line.strip())
 
 def run_file(filename):
     global code, ind
