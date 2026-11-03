@@ -6,13 +6,19 @@
 
 *In new update FileScript can run real python code with block* ```python...endpy```
 
+*Also added function* ```global``` *for ```python...endpy``` block*
+
 *Example:*
 
 ```go
 python
     print("Its python code in FileScript")
     input("Type your text: ")
+
+    global num = 10
 endpy
+
+println  num
 ```
 
 *FileScript instruction* ```input``` *now updated and can output text before input*
