@@ -175,7 +175,7 @@ def lang(line):
     dump_split = line.split()
     parts = shlex.split(line)
 
-    if not line or parts[0] == "//":
+    if not line or parts[0] == "$":
         return
 
     if not pycode or not pycode[-1]:
