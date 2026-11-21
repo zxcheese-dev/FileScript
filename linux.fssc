@@ -1,6 +1,0 @@
-fnc lreboot
-	python
-		import os
-		os.system("reboot &")
-	endpy
-endfnc
