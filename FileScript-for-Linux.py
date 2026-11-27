@@ -237,6 +237,45 @@ def lang(line):
                     else:
                         raise SyntaxError("wait requires 1 argument")
 
+                elif parts[0] == "int":
+                    if len(parts) == 3:
+                        try:
+                            if parts[2] in variables:
+                                variables[parts[1]] = int(variables[parts[2]])
+                            else:
+                                raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                        except (ValueError):
+                            raise ValueError(f"Value '{variables[parts[2]]}' cannot be integer")
+                    else:
+                        raise SyntaxError("int requires 2 arguments")
+                elif parts[0] == "float":
+                    if len(parts) == 3:
+                        try:
+                            if parts[2] in variables:
+                                variables[parts[1]] = float(variables[parts[2]])
+                            else:
+                                raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                        except (ValueError):
+                            raise ValueError(f"Value '{variables[parts[2]]}' cannot be float")
+                    else:
+                        raise SyntaxError("float requires 2 arguments")
+                elif parts[0] == "string":
+                    if len(parts) == 3:
+                        if parts[2] in variables:
+                            variables[parts[1]] = str(variables[parts[2]])
+                        else:
+                            raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                    else:
+                        raise SyntaxError("string requires 2 arguments")
+                elif parts[0] == "bool":
+                    if len(parts) == 3:
+                        if parts[2] in variables:
+                            variables[parts[1]] = bool(variables[parts[2]])
+                        else:
+                            raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                    else:
+                        raise SyntaxError("bool requires 2 arguments")
+
                 elif parts[0] == "if":
                     if not False in skip:
                         match = re.match(r"if\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
@@ -356,7 +395,6 @@ def lang(line):
                                         index += 1
                                     index += 1
                         else:
-                            # 1. Отматываем назад и считаем, сколько while над нами
                             back_index = ind
                             while_count = 0
                             while back_index > 0:
@@ -366,8 +404,7 @@ def lang(line):
                                     parts_back = line.split()
                                     if parts_back and parts_back[0] == "while":
                                         while_count += 1
-                            
-                            # 2. Возвращаемся к текущему break и шагаем вперед на while_count закрывающих endwhl
+
                             index = ind
                             for i in range(while_count):
                                 while index < len(code) and code[index] != "endwhl":
@@ -681,9 +718,11 @@ def lang(line):
                                 run_file(parts[1])
                             except FileNotFoundError:
                                 raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
+
                         elif parts[1].endswith(".py"):
                             try:
-                                with open(parts[1], "r", encoding="utf-8") as f:
+                                path = os.path.realpath(parts[1])
+                                with open(path, "r", encoding="utf-8") as f:
                                     exec(f.read(), globals())
                             except FileNotFoundError:
                                 raise ModuleNotFoundError(f"Module '{parts[1]}' not found")
