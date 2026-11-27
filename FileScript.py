@@ -243,6 +243,45 @@ def lang(line):
                     else:
                         raise SyntaxError("wait requires 1 argument")
 
+                elif parts[0] == "int":
+                    if len(parts) == 3:
+                        try:
+                            if parts[2] in variables:
+                                variables[parts[1]] = int(variables[parts[2]])
+                            else:
+                                raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                        except (ValueError):
+                            raise ValueError(f"Value '{variables[parts[2]]}' cannot be integer")
+                    else:
+                        raise SyntaxError("int requires 2 arguments")
+                elif parts[0] == "float":
+                    if len(parts) == 3:
+                        try:
+                            if parts[2] in variables:
+                                variables[parts[1]] = float(variables[parts[2]])
+                            else:
+                                raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                        except (ValueError):
+                            raise ValueError(f"Value '{variables[parts[2]]}' cannot be float")
+                    else:
+                        raise SyntaxError("float requires 2 arguments")
+                elif parts[0] == "string":
+                    if len(parts) == 3:
+                        if parts[2] in variables:
+                            variables[parts[1]] = str(variables[parts[2]])
+                        else:
+                            raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                    else:
+                        raise SyntaxError("string requires 2 arguments")
+                elif parts[0] == "bool":
+                    if len(parts) == 3:
+                        if parts[2] in variables:
+                            variables[parts[1]] = bool(variables[parts[2]])
+                        else:
+                            raise SyntaxError(f"Value '{parts[2]}' not defined as a variable")
+                    else:
+                        raise SyntaxError("bool requires 2 arguments")
+
                 elif parts[0] == "if":
                     if not False in skip:
                         match = re.match(r"if\s+(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)", line.strip())
