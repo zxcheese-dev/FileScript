@@ -24,10 +24,10 @@ println num
 *FileScript instruction* ```input``` *now updated and can output text before input*
 
 ```go
-// just input
+$ just input
 input text
 
-// input with text
+$ input with text
 input "type here your text: " text
 ```
 
@@ -38,11 +38,11 @@ input "type here your text: " text
 ```go
 var num 1
 
-// starting cycle
+$ starting cycle
 while num <= 10
     println num
 
-    // adding 1 to num
+    $ adding 1 to num
     var num count num + 1
 endwhl
 wait 5
@@ -56,7 +56,7 @@ wait 5
 var msg "while cycle is working now"
 var msg1 "another while cycle is working now"
 
-// all argument
+$ all argument
 while 1 == 1
     while 2 == 2
         while 3 == 3
@@ -69,7 +69,7 @@ while 1 == 1
 	println msg
 endwhl
 
-// number argument
+$ number argument
 while 1 == 1
     while 2 == 2
         while 3 == 3
@@ -96,7 +96,7 @@ input text
 ```go
 input "type your code here: " code
 
-// running input as FileScript code
+$ running input as FileScript code
 exec code
 ```
 
@@ -113,11 +113,11 @@ always println
 
 var msg "hello"
 if msg == "hi"
-    // we marked println with always so println executes even inside a false if block
+    $ we marked println with always so println executes even inside a false if block
     println msg
 endif
 
-// enough means println will no longer ignore false if block
+$ enough means println will no longer ignore false if block
 enough println
 ```
 
