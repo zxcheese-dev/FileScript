@@ -4,6 +4,23 @@
 
 *FileScript is a simple programming language for more convenient work with files and the system*
 
+*Latest update for FileScript gives type conversion with* ```int``` ```float``` ```string``` ```bool```
+
+*Example:*
+
+```go
+var num "10"
+int num num
+
+$ this will return 13 not 103 or traceback (because python doesnt agree to addict string and int)
+println count num + 3
+
+$ also it can be:
+float num num
+string num num
+bool num num
+```
+
 *In new update FileScript can run real python code with block* ```python...endpy```
 
 *Also added function* ```global``` *for ```python...endpy``` block*
