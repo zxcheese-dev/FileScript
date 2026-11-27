@@ -12,7 +12,7 @@
 var num "10"
 int num num
 
-$ this will return 13 not 103 or traceback (because python doesnt agree to addict string and int)
+$ this will return 13 not 103 or traceback (because python doesnt agree to add string and int)
 println count num + 3
 
 $ also it can be:
