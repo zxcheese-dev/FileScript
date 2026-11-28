@@ -83,3 +83,5 @@ var num2 15
 
 println count num1 + num2
 ```
+
+*Also, count doesn't have only +, it also has operations * (multiply), / (divide) and - (subtraction)*
