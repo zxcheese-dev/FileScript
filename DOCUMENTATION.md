@@ -1,5 +1,5 @@
 # FileScript interpreter Documentation
-###### 27 November 2026.
+###### *27 November 2026.*
 
 *FileScript - is a scripting language for more convenient work with files and operating system*
 
