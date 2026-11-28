@@ -60,8 +60,8 @@ def compare(a, b, op):
 
 def count(num, op, num2):
     if not skip or skip[-1]:
-        if num in variables or num2 in variables:
-            try:
+        try:
+            if num in variables or num2 in variables:
                 if num in variables and not num2 in variables:
                     if op == "+": return variables[num] + num_check(num2)
                     if op == "-": return variables[num] - num_check(num2)
@@ -80,16 +80,13 @@ def count(num, op, num2):
                     if op == "*": return variables[num] * variables[num2]
                     if op == "/": return variables[num] / variables[num2]
                     if op == "^": return variables[num] ^ variables[num2]
-            except (ValueError):
-                raise ValueError("count cannot provide arguments that not number")
-        else:
-            try:
+            else:
                 if op == "+": return num_check(num) + num_check(num2)
                 if op == "-": return num_check(num) - num_check(num2)
                 if op == "*": return num_check(num) * num_check(num2)
                 if op == "/": return num_check(num) / num_check(num2)
-            except (ValueError):
-                raise ValueError("count cannot provide arguments that not number")
+        except (ValueError):
+            raise ValueError("count cannot provide arguments that not number")
 
 def returnable(*args):
     if not skip or skip[-1]:
@@ -217,7 +214,7 @@ def lang(line):
                             variables[parts[2]] = input(parts[1])
                         else:
                             if parts[1] in variables:
-                                variables[parts[2]] = input(parts[1])
+                                variables[parts[2]] = input(variables[parts[1]])
                             else:
                                 raise NameError(f"Name '{parts[1]}' is not defined")
                     else:
